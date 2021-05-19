@@ -105,6 +105,8 @@ stmt* make_stmt (int type, var *var, expr *expr,
 
 %}
 
+%error-verbose
+
 /****************************************************************************/
 
 /* types used by terminals and non-terminals */
