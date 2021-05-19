@@ -122,7 +122,7 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %type <e> expr
 %type <s> stmt assign
 
-%token BOOL WHILE DO OD ASSIGN PRINT OR AND XOR NOT TRUE FALSE
+%token VAR WHILE DO OD ASSIGN PRINT OR AND XOR NOT TRUE FALSE
 %token <i> IDENT
 
 %left ';'
@@ -133,9 +133,9 @@ stmt* make_stmt (int type, var *var, expr *expr,
 
 %%
 
-prog	: bools stmt	{ program_stmts = $2; }
+prog	: vars stmt	{ program_stmts = $2; }
 
-bools	: BOOL declist ';'	{ program_vars = $2; }
+vars	: VAR declist ';'	{ program_vars = $2; }
 
 declist	: IDENT			{ $$ = make_ident($1); }
 	| declist ',' IDENT	{ ($$ = make_ident($3))->next = $1; }
