@@ -124,7 +124,7 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %type <e> expr
 %type <s> stmt assign
 
-%token VAR WHILE DO OD ASSIGN PRINT OR EQUAL AND XOR NOT TRUE FALSE IF FI ELSE THEN
+%token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI ELSE THEN
 %token <i> IDENT
 
 %left ';'
@@ -164,6 +164,7 @@ expr	: IDENT		{ $$ = make_expr(0,find_ident($1),NULL,NULL); }
 	| expr XOR expr	{ $$ = make_expr(XOR,NULL,$1,$3); }
 	| expr OR expr	{ $$ = make_expr(OR,NULL,$1,$3); }
 	| expr EQUAL expr	{ $$ = make_expr(EQUAL,NULL,$1,$3); }
+	| expr ADD expr	{ $$ = make_expr(ADD,NULL,$1,$3); }
 	| expr AND expr	{ $$ = make_expr(AND,NULL,$1,$3); }
 	| NOT expr	{ $$ = make_expr(NOT,NULL,$2,NULL); }
 	| TRUE		{ $$ = make_expr(TRUE,NULL,NULL,NULL); }
@@ -186,6 +187,7 @@ int eval (expr *e)
 		case XOR: return eval(e->left) ^ eval(e->right);
 		case OR: return eval(e->left) || eval(e->right);
 		case EQUAL: return eval(e->left) == eval(e->right);
+		case ADD: return eval(e->left) + eval(e->right);
 		case AND: return eval(e->left) && eval(e->right);
 		case NOT: return !eval(e->left);
 		case 0: return e->var->value;
