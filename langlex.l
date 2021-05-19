@@ -19,6 +19,7 @@ DIG	[0-9]
 ":="	{ return ASSIGN; }
 "^"	{ return XOR; }
 "||"	{ return OR; }
+"=="	{ return EQUAL; }
 "&&"	{ return AND; }
 "!"	{ return NOT; }
 
