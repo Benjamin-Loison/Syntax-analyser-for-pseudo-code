@@ -1,4 +1,4 @@
-bool x,y,z;
+var x,y,z;
 
 while !(x && y && z) do
 	print x,y,z;
