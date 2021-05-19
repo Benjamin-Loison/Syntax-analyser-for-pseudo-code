@@ -4,7 +4,7 @@ DIG	[0-9]
 
 %%
 
-"bool"	{ return BOOL; }
+"var"	{ return VAR; }
 "while"	{ return WHILE; }
 "do"	{ return DO; }
 "od"	{ return OD; }
@@ -25,4 +25,3 @@ DIG	[0-9]
 .	{ return *yytext; }
 
 %%
-
