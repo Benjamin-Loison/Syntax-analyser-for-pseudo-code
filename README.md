@@ -8,4 +8,6 @@ commentaire sur une ligne
 
 plusieurs lignes pour var
 
+(attention left/right/priorité pour les opérateurs ajoutés)
+
 ...
