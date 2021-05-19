@@ -122,7 +122,7 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %type <e> expr
 %type <s> stmt assign
 
-%token VAR WHILE DO OD ASSIGN PRINT OR AND XOR NOT TRUE FALSE
+%token VAR WHILE DO OD ASSIGN PRINT OR AND XOR NOT TRUE FALSE IF FI ELSE THEN
 %token <i> IDENT
 
 %left ';'
@@ -145,6 +145,10 @@ stmt	: assign
 		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
 	| WHILE expr DO stmt OD
 		{ $$ = make_stmt(WHILE,NULL,$2,$4,NULL,NULL); }
+	| IF expr THEN stmt FI
+		{ $$ = make_stmt(IF,NULL,$2,$4,NULL,NULL); }
+	| IF expr THEN stmt ELSE stmt FI
+		{ $$ = make_stmt(IF,NULL,$2,$4,$6,NULL); }
 	| PRINT varlist
 		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2); }
 
@@ -204,6 +208,10 @@ void execute (stmt *s)
 			break;
 		case WHILE:
 			while (eval(s->expr)) execute(s->left);
+			break;
+		case IF:
+			if(eval(s->expr)) execute (s->left);
+			else if (s->right != NULL) execute(s->right);
 			break;
 		case PRINT: 
 			print_vars(s->list);

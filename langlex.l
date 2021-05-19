@@ -11,6 +11,10 @@ DIG	[0-9]
 "print"	{ return PRINT; }
 "true"	{ return TRUE; }
 "false"	{ return FALSE; }
+"if"	{ return IF; }
+"then"	{ return THEN; }
+"else"	{ return ELSE; }
+"fi"	{ return FI; }
 
 ":="	{ return ASSIGN; }
 "^"	{ return XOR; }
