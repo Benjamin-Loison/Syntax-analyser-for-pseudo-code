@@ -27,6 +27,7 @@ DIG	[0-9]
 [a-z_][a-z0-9_]* { yylval.i = strdup(yytext); return IDENT; }
 
 [	 \n]   { /* ignore */ }
+"//"[^\n]*$ ; // https://stackoverflow.com/a/23235232
 
 .	{ return *yytext; }
 
