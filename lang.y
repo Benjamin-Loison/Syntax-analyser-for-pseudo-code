@@ -6,7 +6,7 @@
 
 int yylex();
 
-void yyerror(char *s)
+void yyerror(const char *s)
 {
 	fflush(stdout);
 	fprintf(stderr, "%s\n", s);
@@ -131,13 +131,14 @@ CASE TO CONDITION CONDITIONNAL_LIST
 
 %left ';'
 
+%right CONDITION
+%right CONDITIONNAL_LIST
+
 %left EQUAL
 %left OR XOR
 %left AND
 %left ADD
 %right NOT
-%left CONDITION
-%left CONDITIONNAL_LIST
 
 %%
 
@@ -158,8 +159,8 @@ stmt	: assign
 	| PRINT varlist
 		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2); }
 
-conditionnal    : conditionnal conditionnal
-        { $$ = make_stmt(CONDITIONNAL_LIST, NULL, NULL, $1, $2, NULL); }
+conditionnal    : CASE expr TO stmt conditionnal
+        { $$ = make_stmt(CONDITION, NULL, $2, $4, $5, NULL); }
     | CASE expr TO stmt
         { $$ = make_stmt(CONDITION, NULL, $2, NULL, $4, NULL); }
 
@@ -210,6 +211,21 @@ void print_vars (varlist *l)
 	printf("%s = %c  ", l->var->name, l->var->value? 'T' : 'F');
 }
 
+void execute (stmt *s);
+
+int execute_condition (stmt *s)
+{
+	int result = 0;
+	if(s == NULL) return 0;
+	if (eval(s->expr)) {
+		result = 1;
+		execute(s->left);
+	} else {
+		result = result || execute_condition (s->right);
+	}
+	return result;
+}
+
 void execute (stmt *s)
 {
 	switch(s->type)
@@ -222,11 +238,11 @@ void execute (stmt *s)
 			execute(s->right);
 			break;
 		case WHILE:
-			while (eval(s->expr)) execute(s->left);
+			while (execute_condition(s->left)) {};
 			break;
 		case IF:
-			if(eval(s->expr)) execute (s->left);
-			else if (s->right != NULL) execute(s->right);
+			// Il faut regarder si une branche est à effectuer :
+			execute_condition(s->left);
 			break;
 		case PRINT: 
 			print_vars(s->list);
