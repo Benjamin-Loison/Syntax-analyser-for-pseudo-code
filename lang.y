@@ -208,7 +208,7 @@ void print_vars (varlist *l)
 {
 	if (!l) return;
 	print_vars(l->next);
-	printf("%s = %c  ", l->var->name, l->var->value? 'T' : 'F');
+	printf("%s = %i  ", l->var->name, l->var->value);
 }
 
 void execute (stmt *s);
