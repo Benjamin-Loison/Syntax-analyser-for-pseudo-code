@@ -3,10 +3,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <stdbool.h>
 
 int yylex();
 
-void yyerror(char *s)
+void yyerror(const char *s)
 {
 	fflush(stdout);
 	fprintf(stderr, "%s\n", s);
@@ -44,11 +46,19 @@ typedef struct stmt	// command
 	varlist *list;
 } stmt;
 
+typedef struct proc
+{
+	//char* name;
+	stmt *statement;
+	var* var;
+	struct proc *next;
+} proc;
+
 /****************************************************************************/
 /* All data pertaining to the programme are accessible from these two vars. */
 
 var *program_vars;
-stmt *program_stmts;
+proc *program_procs;
 
 /****************************************************************************/
 /* Functions for settting up data structures at parse time.                 */
@@ -105,7 +115,8 @@ stmt* make_stmt (int type, var *var, expr *expr,
 
 %}
 
-%error-verbose
+// %error-verbose is deprecated
+%define parse.error verbose
 
 /****************************************************************************/
 
@@ -119,29 +130,43 @@ stmt* make_stmt (int type, var *var, expr *expr,
 	stmt *s;
 }
 
+%union {
+		int n;
+}
+
 %type <v> declist
 %type <l> varlist
 %type <e> expr
 %type <s> stmt assign
 
-%token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI ELSE THEN
+%token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI ELSE THEN PROC_BEGIN PROC_END PROC_ENDED
 %token <i> IDENT
+%token <n> CST
 
 %left ';'
 
+%left EQUAL
 %left OR XOR
 %left AND
+%left ADD
 %right NOT
-%right EQUAL
 
 %%
 
-prog	: vars stmt	{ program_stmts = $2; }
+prog	: prog_vars proc  { }
 
-vars	: VAR declist ';'	{ program_vars = $2; }
+prog_vars	: VAR declist ';'   { var* tmp = program_vars; program_vars = $2; program_vars->next = tmp; }
+     | prog_vars prog_vars {}
+
+proc	: PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = $2; program_procs->next = tmp; }
+	 | proc proc {}
+
+vars	: VAR declist ';'	{ var* tmp = program_procs->var; program_procs->var = $2; program_procs->var = tmp; }
+	 | vars vars {}
 
 declist	: IDENT			{ $$ = make_ident($1); }
 	| declist ',' IDENT	{ ($$ = make_ident($3))->next = $1; }
+	//| declist ';' 'var' IDENT { ($$ = make_ident($4))->next = $1; }
 
 stmt	: assign
 	| stmt ';' stmt	
@@ -161,7 +186,8 @@ assign	: IDENT ASSIGN expr
 varlist	: IDENT			{ $$ = make_varlist($1); }
 	| varlist ',' IDENT	{ ($$ = make_varlist($3))->next = $1; }
 
-expr	: IDENT		{ $$ = make_expr(0,find_ident($1),NULL,NULL); }
+expr	: CST { $$ = make_expr($1,NULL,NULL,NULL); }
+	| IDENT		{ $$ = make_expr(0,find_ident($1),NULL,NULL); }
 	| expr XOR expr	{ $$ = make_expr(XOR,NULL,$1,$3); }
 	| expr OR expr	{ $$ = make_expr(OR,NULL,$1,$3); }
 	| expr EQUAL expr	{ $$ = make_expr(EQUAL,NULL,$1,$3); }
@@ -199,7 +225,40 @@ void print_vars (varlist *l)
 {
 	if (!l) return;
 	print_vars(l->next);
-	printf("%s = %c  ", l->var->name, l->var->value? 'T' : 'F');
+	printf("%s = %i  ", l->var->name, l->var->value);
+}
+
+/*void execute_proc (proc *proc)
+{
+	if (!proc) return;
+	print
+}*/
+
+// il faut pas éxécuter processus 1 puis 2 car sinon ça risque de s'interbloquer donc faut faire un peu de 1 puis un peu de 2 et ainsi de suite
+void execute_step(stmt *s)
+{
+	switch(s->type)
+    {
+        case ASSIGN:
+            s->var->value = eval(s->expr);
+            break;
+        case ';':
+            execute_step(s->left);
+            s->left = s->right;
+			s->right = NULL;
+            break;
+        case WHILE:
+            if (eval(s->expr)) execute_step(s->left);
+            break;
+        case IF:
+            if(eval(s->expr)) execute_step (s->left);
+            else if (s->right != NULL) execute_step(s->right);
+            break;
+        case PRINT:
+            print_vars(s->list);
+            puts("");
+            break;
+    }
 }
 
 void execute (stmt *s)
@@ -224,7 +283,32 @@ void execute (stmt *s)
 			print_vars(s->list);
 			puts("");
 			break;
+		case PROC_ENDED:
+			break;
 	}
+}
+
+bool is_a_proc_needing_execute(proc *p)
+{
+	printf("is_a_proc_needing_execute a\n");
+	if (!p) return false;
+	return (p->statement != NULL && p->statement->type != PROC_ENDED) || is_a_proc_needing_execute(p->next);
+}
+
+unsigned int proc_size_aux(proc *p, unsigned int acc)
+{
+	if (!p) return acc;
+	return proc_size_aux(p->next, acc + 1);
+}
+
+unsigned int get_proc_size(proc *p)
+{
+	return proc_size_aux(p, 0);
+}
+
+proc* get_proc(proc *p, unsigned int proc_id)
+{
+	return proc_id == 0 ? p : get_proc(p->next, proc_id--);
 }
 
 /****************************************************************************/
@@ -233,5 +317,22 @@ int main (int argc, char **argv)
 {
 	if (argc <= 1) { yyerror("no file specified"); exit(1); }
 	yyin = fopen(argv[1],"r");
-	if (!yyparse()) execute(program_stmts);
+	printf("parsing...\n");
+	if (!yyparse())
+	{
+		//if (!l) return;
+		srand(time(NULL));
+		printf("counting...\n");
+		unsigned int proc_size = get_proc_size(program_procs);
+		printf("proc_size: %i\n", proc_size);
+		while(is_a_proc_needing_execute(program_procs))
+		{
+			printf("executing stuff...\n");
+			int r = rand() % proc_size;
+			printf("executing proc %i\n", r);
+			proc* p = get_proc(program_procs, r);
+    		execute_step(p->statement);
+		}
+		//execute(program_stmts);
+	}
 }
