@@ -149,7 +149,8 @@ CASE TO CONDITION CONDITIONNAL_LIST
 
 prog	: vars stmt	{ program_stmts = $2; }
 
-vars	: VAR declist ';'	{ program_vars = $2; }
+vars	: VAR declist ';'	{ var* tmp = program_vars; program_vars = $2; program_vars->next = tmp; }
+	| vars vars {}
 
 declist	: IDENT			{ $$ = make_ident($1); }
 	| declist ',' IDENT	{ ($$ = make_ident($3))->next = $1; }
