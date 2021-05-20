@@ -3,22 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ppprint.h"
-
-int tab = 0;
+#include "structure.h"
 
 int yylex();
-
-void indentation()
-{
-	for (int i = 0 ; i < tab ; i ++)
-		printf ("\t");
-	tab ++;
-}
-void desindentation()
-{
-	tab --;
-}
 
 void yyerror(const char *s)
 {
@@ -26,98 +13,12 @@ void yyerror(const char *s)
 	fprintf(stderr, "%s\n", s);
 }
 
-/***************************************************************************/
-/* Data structures for storing a programme.								*/
-
-typedef struct var	// a variable
-{
-	char *name;
-	int value;
-	struct var *next;
-} var;
-
-typedef struct varlist	// variable reference (used for print statement)
-{
-	struct var *var;
-	struct varlist *next;
-} varlist;
-
-typedef struct expr	// boolean expression
-{
-	int type;	// TRUE, FALSE, OR, AND, NOT, 0 (variable)
-	var *var;
-	struct expr *left, *right;
-} expr;
-
-typedef struct stmt	// command
-{
-	int type;	// ASSIGN, ';', WHILE, PRINT
-	var *var;
-	expr *expr;
-	struct stmt *left, *right;
-	varlist *list;
-} stmt;
 
 /****************************************************************************/
 /* All data pertaining to the programme are accessible from these two vars. */
 
 var *program_vars;
 stmt *program_stmts;
-
-/****************************************************************************/
-/* Functions for settting up data structures at parse time.				 */
-
-var* make_ident (char *s)
-{
-	printf("[make_indent] '%s'\n", s);
-	var *v = malloc(sizeof(var));
-	v->name = s;
-	v->value = 0;	// make variable null initially
-	v->next = NULL;
-	return v;
-}
-
-var* find_ident (char *s)
-{
-	printf("[find_indent] '%s'\n", s);
-	var *v = program_vars;
-	while (v && strcmp(v->name,s)) v = v->next;
-	if (!v) { yyerror("undeclared variable"); exit(1); }
-	return v;
-}
-
-varlist* make_varlist (char *s)
-{
-	printf("[make_varlist] '%s'\n", s);
-	var *v = find_ident(s);
-	varlist *l = malloc(sizeof(varlist));
-	l->var = v;
-	l->next = NULL;
-	return l;
-}
-
-expr* make_expr (int type, var *var, expr *left, expr *right)
-{
-	expr *e = malloc(sizeof(expr));
-	e->type = type;
-	e->var = var;
-	e->left = left;
-	e->right = right;
-	return e;
-}
-
-stmt* make_stmt (int type, var *var, expr *expr,
-			stmt *left, stmt *right, varlist *list)
-{
-	stmt *s = malloc(sizeof(stmt));
-	s->type = type;
-	s->var = var;
-	s->expr = expr;
-	s->left = left;
-	s->right = right;
-	s->list = list;
-	return s;
-}
 
 
 %}
@@ -135,10 +36,7 @@ stmt* make_stmt (int type, var *var, expr *expr,
 	varlist *l;
 	expr *e;
 	stmt *s;
-}
-
-%union {
-	int n;
+	int n;// À négocier avec le Bison
 }
 
 %type <v> declist
@@ -179,15 +77,15 @@ stmt	:
 		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2); }
 
 assign	: IDENT ASSIGN expr
-		{ $$ = make_stmt(ASSIGN,find_ident($1),$3,NULL,NULL,NULL); }
+		{ $$ = make_stmt(ASSIGN,find_ident($1, program_vars),$3,NULL,NULL,NULL); }
 
 varlist	:
-	  IDENT			{ $$ = make_varlist($1); }
-	| varlist ',' IDENT	{ ($$ = make_varlist($3))->next = $1; }
+	  IDENT			{ $$ = make_varlist($1, program_vars); }
+	| varlist ',' IDENT	{ ($$ = make_varlist($3, program_vars))->next = $1; }
 
 expr	:
 	  CST { $$ = make_expr($1,NULL,NULL,NULL); }
-	| IDENT		{ $$ = make_expr(0,find_ident($1),NULL,NULL); }
+	| IDENT		{ $$ = make_expr(0,find_ident($1, program_vars),NULL,NULL); }
 	| expr XOR expr	{ $$ = make_expr(XOR,NULL,$1,$3); }
 	| expr OR expr	{ $$ = make_expr(OR,NULL,$1,$3); }
 	| expr EQUAL expr	{ $$ = make_expr(EQUAL,NULL,$1,$3); }
@@ -200,10 +98,6 @@ expr	:
 
 #include "langlex.c"
 
-/****************************************************************************/
-/*  pp_print section														*/
-
-// TODO!
 
 /****************************************************************************/
 /* programme interpreter	  :											 */
