@@ -27,7 +27,7 @@ void yyerror(const char *s)
 }
 
 /***************************************************************************/
-/* Data structures for storing a programme.                                */
+/* Data structures for storing a programme.								*/
 
 typedef struct var	// a variable
 {
@@ -65,14 +65,14 @@ var *program_vars;
 stmt *program_stmts;
 
 /****************************************************************************/
-/* Functions for settting up data structures at parse time.                 */
+/* Functions for settting up data structures at parse time.				 */
 
 var* make_ident (char *s)
 {
 	printf("[make_indent] '%s'\n", s);
 	var *v = malloc(sizeof(var));
 	v->name = s;
-	v->value = 0;	// make variable false initially
+	v->value = 0;	// make variable null initially
 	v->next = NULL;
 	return v;
 }
@@ -98,22 +98,17 @@ varlist* make_varlist (char *s)
 
 expr* make_expr (int type, var *var, expr *left, expr *right)
 {
-	printf("[make_expr]: %s\n", print_expr_type(type));
-	indentation();
 	expr *e = malloc(sizeof(expr));
 	e->type = type;
 	e->var = var;
 	e->left = left;
 	e->right = right;
-	desindentation();
 	return e;
 }
 
 stmt* make_stmt (int type, var *var, expr *expr,
 			stmt *left, stmt *right, varlist *list)
 {
-	printf("[make_stmt]\n");
-	indentation();
 	stmt *s = malloc(sizeof(stmt));
 	s->type = type;
 	s->var = var;
@@ -121,7 +116,6 @@ stmt* make_stmt (int type, var *var, expr *expr,
 	s->left = left;
 	s->right = right;
 	s->list = list;
-	desindentation();
 	return s;
 }
 
@@ -150,9 +144,9 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %type <v> declist
 %type <l> varlist
 %type <e> expr
-%type <s> stmt assign conditionnal
+%type <s> stmt assign
 
-%token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI CASE TO CONDITION CONDITIONNAL_LIST
+%token VAR ASSIGN PRINT OR EQUAL ADD AND XOR NOT
 %token <i> IDENT
 %token <n> CST
 
@@ -172,33 +166,27 @@ stmt* make_stmt (int type, var *var, expr *expr,
 prog	: vars stmt	{ program_stmts = $2; }
 
 vars	: VAR declist ';'	{ var* tmp = program_vars; program_vars = $2; program_vars->next = tmp; }
-	| vars vars {}
 
-declist	: IDENT			{ $$ = make_ident($1); }
+declist	:
+	  IDENT			{ $$ = make_ident($1); }
 	| declist ',' IDENT	{ ($$ = make_ident($3))->next = $1; }
 
-stmt	: assign
+stmt	:
+	  assign
 	| stmt ';' stmt	
 		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
-    | WHILE conditionnal OD
-        { $$ = make_stmt(WHILE,NULL,NULL, $2,NULL,NULL); }
-    | IF conditionnal FI
-        { $$ = make_stmt(IF,NULL, NULL,$2,NULL,NULL); }
 	| PRINT varlist
 		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2); }
-
-conditionnal    : CASE expr TO stmt conditionnal
-        { $$ = make_stmt(CONDITION, NULL, $2, $4, $5, NULL); }
-    | CASE expr TO stmt
-        { $$ = make_stmt(CONDITION, NULL, $2, NULL, $4, NULL); }
 
 assign	: IDENT ASSIGN expr
 		{ $$ = make_stmt(ASSIGN,find_ident($1),$3,NULL,NULL,NULL); }
 
-varlist	: IDENT			{ $$ = make_varlist($1); }
+varlist	:
+	  IDENT			{ $$ = make_varlist($1); }
 	| varlist ',' IDENT	{ ($$ = make_varlist($3))->next = $1; }
 
-expr	: CST { $$ = make_expr($1,NULL,NULL,NULL); }
+expr	:
+	  CST { $$ = make_expr($1,NULL,NULL,NULL); }
 	| IDENT		{ $$ = make_expr(0,find_ident($1),NULL,NULL); }
 	| expr XOR expr	{ $$ = make_expr(XOR,NULL,$1,$3); }
 	| expr OR expr	{ $$ = make_expr(OR,NULL,$1,$3); }
@@ -206,8 +194,6 @@ expr	: CST { $$ = make_expr($1,NULL,NULL,NULL); }
 	| expr ADD expr	{ $$ = make_expr(ADD,NULL,$1,$3); }
 	| expr AND expr	{ $$ = make_expr(AND,NULL,$1,$3); }
 	| NOT expr	{ $$ = make_expr(NOT,NULL,$2,NULL); }
-	| TRUE		{ $$ = make_expr(TRUE,NULL,NULL,NULL); }
-	| FALSE		{ $$ = make_expr(FALSE,NULL,NULL,NULL); }
 	| '(' expr ')'	{ $$ = $2; }
 
 %%
@@ -215,45 +201,17 @@ expr	: CST { $$ = make_expr($1,NULL,NULL,NULL); }
 #include "langlex.c"
 
 /****************************************************************************/
-/*  pp_print section                                                        */
+/*  pp_print section														*/
 
-char *print_expr_type (int type)
-{
-	switch(type) {
-		case VAR: return ("VAR");
-		case IDENT: return ("INDENT");
-		case ASSIGN: return ("ASSIGN");
-		case '-': return ("'-'");
-		case WHILE: return ("WHILE");
-		case IF: return ("IF");
-		case PRINT: return ("PRINT");
-		case XOR: return ("XOR");
-		case OR: return ("OR");
-		case EQUAL: return ("EQUAL");
-		case ADD: return ("ADD");
-		case AND: return ("AND");
-		case NOT: return ("NOT");
-		case TRUE: return ("TRUE");
-		case FALSE: return ("FALSE");
-		case CONDITION: return ("CONDITION");
-		case ';': return ("';'");
-		case CONDITIONNAL_LIST: return ("CONDITIONNAL_LIST");
-		default:
-			char *res = malloc(sizeof(char) * 10);
-			sprintf(res, "type%5d", type);
-			return res;
-	}
-}
+// TODO!
 
 /****************************************************************************/
-/* programme interpreter      :                                             */
+/* programme interpreter	  :											 */
 
 int eval (expr *e)
 {
 	switch (e->type)
 	{
-		case TRUE: return 1;
-		case FALSE: return 0;
 		case XOR: return eval(e->left) ^ eval(e->right);
 		case OR: return eval(e->left) || eval(e->right);
 		case EQUAL: return eval(e->left) == eval(e->right);
@@ -271,29 +229,8 @@ void print_vars (varlist *l)
 	printf("%s = %i  ", l->var->name, l->var->value);
 }
 
-void execute (stmt *s);
-
-int execute_condition (stmt *s)
-{
-	indentation();
-	printf("Condition execution");
-	int result = 0;
-	if(s == NULL) return 0;
-	if (eval(s->expr)) {
-		result = 1;
-		execute(s->left);
-	} else {
-		result = result || execute_condition (s->right);
-	}
-	desindentation();
-	printf("Stop condition execution");
-	return result;
-}
-
 void execute (stmt *s)
 {
-	indentation();
-	printf("Start execution");
 	switch(s->type)
 	{
 		case ASSIGN:
@@ -303,20 +240,11 @@ void execute (stmt *s)
 			execute(s->left);
 			execute(s->right);
 			break;
-		case WHILE:
-			while (execute_condition(s->left)) {};
-			break;
-		case IF:
-			// Il faut regarder si une branche est à effectuer :
-			execute_condition(s->left);
-			break;
 		case PRINT: 
 			print_vars(s->list);
 			puts("");
 			break;
 	}
-	desindentation();
-	printf("Stop  execution");
 }
 
 /****************************************************************************/
