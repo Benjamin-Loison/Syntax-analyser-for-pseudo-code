@@ -1,11 +1,17 @@
 EXEC	= lang
 
-.PHONY: all clean mrproper
+.PHONY: all clean mrproper debug
 
 all: $(EXEC)
 
 $(EXEC): langlex.c lang.y
 	yacc  lang.y
+	mv -f y.tab.c lang.c
+	cc    -c -o lang.o lang.c
+	cc   lang.o   -o lang
+
+debug: langlex.c lang.y
+	yacc  -Wcounterexamples lang.y
 	mv -f y.tab.c lang.c
 	cc    -c -o lang.o lang.c
 	cc   lang.o   -o lang

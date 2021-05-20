@@ -123,9 +123,10 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %type <v> declist
 %type <l> varlist
 %type <e> expr
-%type <s> stmt assign
+%type <s> stmt assign conditionnal
 
 %token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI ELSE THEN
+CASE TO CONDITION CONDITIONNAL_LIST
 %token <i> IDENT
 
 %left ';'
@@ -135,6 +136,8 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %left AND
 %left ADD
 %right NOT
+%left CONDITION
+%left CONDITIONNAL_LIST
 
 %%
 
@@ -148,14 +151,17 @@ declist	: IDENT			{ $$ = make_ident($1); }
 stmt	: assign
 	| stmt ';' stmt	
 		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
-	| WHILE expr DO stmt OD
-		{ $$ = make_stmt(WHILE,NULL,$2,$4,NULL,NULL); }
-	| IF expr THEN stmt FI
-		{ $$ = make_stmt(IF,NULL,$2,$4,NULL,NULL); }
-	| IF expr THEN stmt ELSE stmt FI
-		{ $$ = make_stmt(IF,NULL,$2,$4,$6,NULL); }
+    | WHILE conditionnal DO stmt OD
+        { $$ = make_stmt(WHILE,NULL,NULL, $2,$4,NULL); }
+    | IF conditionnal FI
+        { $$ = make_stmt(IF,NULL, NULL,$2,NULL,NULL); }
 	| PRINT varlist
 		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2); }
+
+conditionnal    : conditionnal conditionnal
+        { $$ = make_stmt(CONDITIONNAL_LIST, NULL, NULL, $1, $2, NULL); }
+    | CASE expr TO stmt
+        { $$ = make_stmt(CONDITION, NULL, $2, NULL, $4, NULL); }
 
 assign	: IDENT ASSIGN expr
 		{ $$ = make_stmt(ASSIGN,find_ident($1),$3,NULL,NULL,NULL); }
