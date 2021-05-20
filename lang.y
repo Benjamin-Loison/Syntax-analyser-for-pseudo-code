@@ -120,6 +120,10 @@ stmt* make_stmt (int type, var *var, expr *expr,
 	stmt *s;
 }
 
+%union {
+	int n;
+}
+
 %type <v> declist
 %type <l> varlist
 %type <e> expr
@@ -128,6 +132,7 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI ELSE THEN
 CASE TO CONDITION CONDITIONNAL_LIST
 %token <i> IDENT
+%token <n> CST
 
 %left ';'
 
@@ -170,7 +175,8 @@ assign	: IDENT ASSIGN expr
 varlist	: IDENT			{ $$ = make_varlist($1); }
 	| varlist ',' IDENT	{ ($$ = make_varlist($3))->next = $1; }
 
-expr	: IDENT		{ $$ = make_expr(0,find_ident($1),NULL,NULL); }
+expr	: CST { $$ = make_expr($1,NULL,NULL,NULL); }
+	| IDENT		{ $$ = make_expr(0,find_ident($1),NULL,NULL); }
 	| expr XOR expr	{ $$ = make_expr(XOR,NULL,$1,$3); }
 	| expr OR expr	{ $$ = make_expr(OR,NULL,$1,$3); }
 	| expr EQUAL expr	{ $$ = make_expr(EQUAL,NULL,$1,$3); }
