@@ -7,7 +7,7 @@ all: $(EXEC)
 $(EXEC): langlex.c lang.y
 	yacc  lang.y
 	mv -f y.tab.c lang.c
-	gcc -o lang structure.c lang.c
+	gcc -o lang ast.c executer.c printer.c lang.c
 
 debug: langlex.c lang.y
 	yacc  -Wcounterexamples lang.y

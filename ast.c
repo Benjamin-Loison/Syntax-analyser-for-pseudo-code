@@ -1,4 +1,4 @@
-#include "structure.h"
+#include "ast.h"
 
 /****************************************************************************/
 /* Functions for settting up data structures at parse time.				 */

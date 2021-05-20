@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "structure.h"
+#include "ast.h"
+#include "executer.h"
+#include "printer.h"
 
 int yylex();
 
@@ -98,54 +100,45 @@ expr	:
 
 #include "langlex.c"
 
-
 /****************************************************************************/
-/* programme interpreter	  :											 */
-
-int eval (expr *e)
-{
-	switch (e->type)
-	{
-		case XOR: return eval(e->left) ^ eval(e->right);
-		case OR: return eval(e->left) || eval(e->right);
-		case EQUAL: return eval(e->left) == eval(e->right);
-		case ADD: return eval(e->left) + eval(e->right);
-		case AND: return eval(e->left) && eval(e->right);
-		case NOT: return !eval(e->left);
-		case 0: return e->var->value;
-	}
-}
-
-void print_vars (varlist *l)
-{
-	if (!l) return;
-	print_vars(l->next);
-	printf("%s = %i  ", l->var->name, l->var->value);
-}
-
-void execute (stmt *s)
-{
-	switch(s->type)
-	{
-		case ASSIGN:
-			s->var->value = eval(s->expr);
-			break;
-		case ';':
-			execute(s->left);
-			execute(s->right);
-			break;
-		case PRINT: 
-			print_vars(s->list);
-			puts("");
-			break;
-	}
-}
-
-/****************************************************************************/
+/* main bloc                                                                */
 
 int main (int argc, char **argv)
 {
-	if (argc <= 1) { yyerror("no file specified"); exit(1); }
-	yyin = fopen(argv[1],"r");
-	if (!yyparse()) execute(program_stmts);
+	short print_ast_flag = 0;
+	short execute_flag = 1;
+	char *input_file = NULL;
+
+	// Parse command line options
+	for (int i = 1 ; i < argc ; i ++) {
+		// printf ("%d / %d -> %s\n", i, argc - 1, argv[i]);
+		if (!strcmp(argv[i], "-p"))
+			print_ast_flag = 1;
+		else if (!strcmp(argv[i], "-no-exec"))
+			execute_flag = 0;
+		else if (!strcmp(argv[i], "-f") && i + 1 < argc)
+			input_file = argv[++i];
+		else
+			input_file = argv[i];
+	}
+
+	// Managing input file
+	if (input_file == NULL) {
+		yyerror("No input file specified.");
+		exit(1);
+	}
+	yyin = fopen(input_file,"r");
+
+	// Debug information
+	printf("Program execution for:\n\tfile: %s\n", input_file);
+	if(print_ast_flag) printf("\t%15s: \033[32menabled\033[0m\n", "ast printing");
+		else printf("\t%15s: \033[33mdisabled\033[0m\n", "ast printing");
+	if(execute_flag) printf("\t%15s: \033[32menabled\033[0m\n", "ast execution");
+		else printf("\t%15s: \033[33mdisabled\033[0m\n", "ast execution");
+
+	if (!yyparse()) {// The parsing was successfull
+		if (print_ast_flag) print_ast(program_stmts);
+		if(execute_flag) execute_ast(program_stmts);
+	} else
+		yyerror("The parser failed.\n\n");
 }
