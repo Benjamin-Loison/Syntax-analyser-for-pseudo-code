@@ -105,7 +105,8 @@ stmt* make_stmt (int type, var *var, expr *expr,
 
 %}
 
-%error-verbose
+// %error-verbose is deprecated
+%define parse.error verbose
 
 /****************************************************************************/
 
