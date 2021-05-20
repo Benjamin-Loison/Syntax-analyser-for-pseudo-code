@@ -24,9 +24,14 @@ DIG	[0-9]
 "&&"	{ return AND; }
 "!"	{ return NOT; }
 
+"proc "[a-z][a-z0-9]* { return PROC_BEGIN; }
+"end" { return PROC_END; }
 [a-z_][a-z0-9_]* { yylval.i = strdup(yytext); return IDENT; }
+[0-9]* { yylval.i = atoi(yytext); return CST; }
+
 
 [	 \n]   { /* ignore */ }
+"//"[^\n]*$ ; // https://stackoverflow.com/a/23235232
 
 .	{ return *yytext; }
 
