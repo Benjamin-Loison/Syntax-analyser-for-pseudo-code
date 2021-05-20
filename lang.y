@@ -3,8 +3,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "ppprint.h"
+
+int tab = 0;
 
 int yylex();
+
+void indentation()
+{
+	for (int i = 0 ; i < tab ; i ++)
+		printf ("\t");
+	tab ++;
+}
+void desindentation()
+{
+	tab --;
+}
 
 void yyerror(const char *s)
 {
@@ -55,6 +69,7 @@ stmt *program_stmts;
 
 var* make_ident (char *s)
 {
+	printf("[make_indent] '%s'\n", s);
 	var *v = malloc(sizeof(var));
 	v->name = s;
 	v->value = 0;	// make variable false initially
@@ -64,6 +79,7 @@ var* make_ident (char *s)
 
 var* find_ident (char *s)
 {
+	printf("[find_indent] '%s'\n", s);
 	var *v = program_vars;
 	while (v && strcmp(v->name,s)) v = v->next;
 	if (!v) { yyerror("undeclared variable"); exit(1); }
@@ -72,6 +88,7 @@ var* find_ident (char *s)
 
 varlist* make_varlist (char *s)
 {
+	printf("[make_varlist] '%s'\n", s);
 	var *v = find_ident(s);
 	varlist *l = malloc(sizeof(varlist));
 	l->var = v;
@@ -81,17 +98,22 @@ varlist* make_varlist (char *s)
 
 expr* make_expr (int type, var *var, expr *left, expr *right)
 {
+	printf("[make_expr]: %s\n", print_expr_type(type));
+	indentation();
 	expr *e = malloc(sizeof(expr));
 	e->type = type;
 	e->var = var;
 	e->left = left;
 	e->right = right;
+	desindentation();
 	return e;
 }
 
 stmt* make_stmt (int type, var *var, expr *expr,
 			stmt *left, stmt *right, varlist *list)
 {
+	printf("[make_stmt]\n");
+	indentation();
 	stmt *s = malloc(sizeof(stmt));
 	s->type = type;
 	s->var = var;
@@ -99,6 +121,7 @@ stmt* make_stmt (int type, var *var, expr *expr,
 	s->left = left;
 	s->right = right;
 	s->list = list;
+	desindentation();
 	return s;
 }
 
@@ -129,8 +152,7 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %type <e> expr
 %type <s> stmt assign conditionnal
 
-%token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI ELSE THEN
-CASE TO CONDITION CONDITIONNAL_LIST
+%token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI CASE TO CONDITION CONDITIONNAL_LIST
 %token <i> IDENT
 %token <n> CST
 
@@ -158,8 +180,8 @@ declist	: IDENT			{ $$ = make_ident($1); }
 stmt	: assign
 	| stmt ';' stmt	
 		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
-    | WHILE conditionnal DO stmt OD
-        { $$ = make_stmt(WHILE,NULL,NULL, $2,$4,NULL); }
+    | WHILE conditionnal OD
+        { $$ = make_stmt(WHILE,NULL,NULL, $2,NULL,NULL); }
     | IF conditionnal FI
         { $$ = make_stmt(IF,NULL, NULL,$2,NULL,NULL); }
 	| PRINT varlist
@@ -193,6 +215,37 @@ expr	: CST { $$ = make_expr($1,NULL,NULL,NULL); }
 #include "langlex.c"
 
 /****************************************************************************/
+/*  pp_print section                                                        */
+
+char *print_expr_type (int type)
+{
+	switch(type) {
+		case VAR: return ("VAR");
+		case IDENT: return ("INDENT");
+		case ASSIGN: return ("ASSIGN");
+		case '-': return ("'-'");
+		case WHILE: return ("WHILE");
+		case IF: return ("IF");
+		case PRINT: return ("PRINT");
+		case XOR: return ("XOR");
+		case OR: return ("OR");
+		case EQUAL: return ("EQUAL");
+		case ADD: return ("ADD");
+		case AND: return ("AND");
+		case NOT: return ("NOT");
+		case TRUE: return ("TRUE");
+		case FALSE: return ("FALSE");
+		case CONDITION: return ("CONDITION");
+		case ';': return ("';'");
+		case CONDITIONNAL_LIST: return ("CONDITIONNAL_LIST");
+		default:
+			char *res = malloc(sizeof(char) * 10);
+			sprintf(res, "type%5d", type);
+			return res;
+	}
+}
+
+/****************************************************************************/
 /* programme interpreter      :                                             */
 
 int eval (expr *e)
@@ -222,6 +275,8 @@ void execute (stmt *s);
 
 int execute_condition (stmt *s)
 {
+	indentation();
+	printf("Condition execution");
 	int result = 0;
 	if(s == NULL) return 0;
 	if (eval(s->expr)) {
@@ -230,11 +285,15 @@ int execute_condition (stmt *s)
 	} else {
 		result = result || execute_condition (s->right);
 	}
+	desindentation();
+	printf("Stop condition execution");
 	return result;
 }
 
 void execute (stmt *s)
 {
+	indentation();
+	printf("Start execution");
 	switch(s->type)
 	{
 		case ASSIGN:
@@ -256,6 +315,8 @@ void execute (stmt *s)
 			puts("");
 			break;
 	}
+	desindentation();
+	printf("Stop  execution");
 }
 
 /****************************************************************************/
