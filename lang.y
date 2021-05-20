@@ -132,6 +132,7 @@ stmt* make_stmt (int type, var *var, expr *expr,
 %left OR XOR
 %left AND
 %right NOT
+%right EQUAL
 
 %%
 
