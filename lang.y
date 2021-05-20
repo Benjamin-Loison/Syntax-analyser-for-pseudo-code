@@ -130,10 +130,11 @@ stmt* make_stmt (int type, var *var, expr *expr,
 
 %left ';'
 
+%left EQUAL
 %left OR XOR
 %left AND
+%left ADD
 %right NOT
-%right EQUAL
 
 %%
 
