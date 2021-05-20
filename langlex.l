@@ -25,6 +25,7 @@ DIG	[0-9]
 "!"	{ return NOT; }
 
 [a-z_][a-z0-9_]* { yylval.i = strdup(yytext); return IDENT; }
+[0-9]* { yylval.i = atoi(yytext); return CST; }
 
 [	 \n]   { /* ignore */ }
 "//"[^\n]*$ ; // https://stackoverflow.com/a/23235232
