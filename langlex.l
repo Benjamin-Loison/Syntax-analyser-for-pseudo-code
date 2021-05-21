@@ -36,3 +36,4 @@ DIG	[0-9]
 .	{ return *yytext; }
 
 %%
+

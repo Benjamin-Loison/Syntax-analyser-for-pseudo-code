@@ -48,7 +48,7 @@ typedef struct stmt	// command
 
 typedef struct proc
 {
-	//char* name;
+	char* name;
 	stmt *statement;
 	var* var;
 	struct proc *next;
@@ -112,6 +112,18 @@ stmt* make_stmt (int type, var *var, expr *expr,
 	return s;
 }
 
+proc* make_proc (stmt *s/*, int type*/) /// TODO: initialize with the argument
+{
+	proc* p = malloc(sizeof(proc));
+	p->name = "testName";
+	p->next = NULL;
+	//stmt* ns = make_stmt (type/*PROC_ENDED*/, NULL, NULL, NULL, NULL, NULL);
+	p->statement = s/*ns*//*s*/;
+	p->var = NULL;
+	p->next = NULL;
+	return p;
+}
+
 
 %}
 
@@ -158,7 +170,7 @@ prog	: prog_vars proc  { }
 prog_vars	: VAR declist ';'   { var* tmp = program_vars; program_vars = $2; program_vars->next = tmp; }
      | prog_vars prog_vars {}
 
-proc	: PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = $2; program_procs->next = tmp; }
+proc	: PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = make_proc($2); program_procs->next = tmp; }
 	 | proc proc {}
 
 vars	: VAR declist ';'	{ var* tmp = program_procs->var; program_procs->var = $2; program_procs->var = tmp; }
@@ -234,27 +246,43 @@ void print_vars (varlist *l)
 	print
 }*/
 
+void debug(char* s)
+{
+	//printf(s);
+}
+
 // il faut pas éxécuter processus 1 puis 2 car sinon ça risque de s'interbloquer donc faut faire un peu de 1 puis un peu de 2 et ainsi de suite
 void execute_step(stmt *s)
 {
+	debug("doing: ");
 	switch(s->type)
     {
         case ASSIGN:
+			debug("ASSIGN\n");
             s->var->value = eval(s->expr);
             break;
         case ';':
+			debug(";\n");
             execute_step(s->left);
-            s->left = s->right;
-			s->right = NULL;
+			execute_step(s->right);
+            /*s->left = s->right;
+			s->right = NULL;*/
             break;
         case WHILE:
-            if (eval(s->expr)) execute_step(s->left);
+			debug("WHILE\n");
+            //if (eval(s->expr)) execute_step(s->left);
+			while (eval(s->expr)) execute_step(s->left);
+			//debug("yeah\n");
+			//return; // this is so violent
+			s->type = PROC_ENDED;
             break;
         case IF:
+			debug("IF\n");
             if(eval(s->expr)) execute_step (s->left);
             else if (s->right != NULL) execute_step(s->right);
             break;
         case PRINT:
+			debug("PRINT\n");
             print_vars(s->list);
             puts("");
             break;
@@ -292,6 +320,9 @@ bool is_a_proc_needing_execute(proc *p)
 {
 	printf("is_a_proc_needing_execute a\n");
 	if (!p) return false;
+	printf("is_a_proc_needing_execute b\n");
+	//stmt *s = p->statement;
+	//printf("is_a_proc_needing_execute c\n");
 	return (p->statement != NULL && p->statement->type != PROC_ENDED) || is_a_proc_needing_execute(p->next);
 }
 
@@ -331,6 +362,7 @@ int main (int argc, char **argv)
 			int r = rand() % proc_size;
 			printf("executing proc %i\n", r);
 			proc* p = get_proc(program_procs, r);
+			printf("I got the proc I need to see me through\n");
     		execute_step(p->statement);
 		}
 		//execute(program_stmts);
