@@ -5,124 +5,16 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include "ast.h"
 
 int yylex();
 
-void yyerror(const char *s)
-{
-	fflush(stdout);
-	fprintf(stderr, "%s\n", s);
-}
-
-/***************************************************************************/
-/* Data structures for storing a programme.                                */
-
-typedef struct var	// a variable
-{
-	char *name;
-	int value;
-	struct var *next;
-} var;
-
-typedef struct varlist	// variable reference (used for print statement)
-{
-	struct var *var;
-	struct varlist *next;
-} varlist;
-
-typedef struct expr	// boolean expression
-{
-	int type;	// TRUE, FALSE, OR, AND, NOT, 0 (variable)
-	var *var;
-	struct expr *left, *right;
-} expr;
-
-typedef struct stmt	// command
-{
-	int type;	// ASSIGN, ';', WHILE, PRINT
-	var *var;
-	expr *expr;
-	struct stmt *left, *right;
-	varlist *list;
-} stmt;
-
-typedef struct proc
-{
-	char* name;
-	stmt *statement;
-	var* var;
-	struct proc *next;
-} proc;
 
 /****************************************************************************/
 /* All data pertaining to the programme are accessible from these two vars. */
 
-var *program_vars;
-proc *program_procs;
-
-/****************************************************************************/
-/* Functions for settting up data structures at parse time.                 */
-
-var* make_ident (char *s)
-{
-	var *v = malloc(sizeof(var));
-	v->name = s;
-	v->value = 0;	// make variable false initially
-	v->next = NULL;
-	return v;
-}
-
-var* find_ident (char *s)
-{
-	var *v = program_vars;
-	while (v && strcmp(v->name,s)) v = v->next;
-	if (!v) { yyerror("undeclared variable"); exit(1); }
-	return v;
-}
-
-varlist* make_varlist (char *s)
-{
-	var *v = find_ident(s);
-	varlist *l = malloc(sizeof(varlist));
-	l->var = v;
-	l->next = NULL;
-	return l;
-}
-
-expr* make_expr (int type, var *var, expr *left, expr *right)
-{
-	expr *e = malloc(sizeof(expr));
-	e->type = type;
-	e->var = var;
-	e->left = left;
-	e->right = right;
-	return e;
-}
-
-stmt* make_stmt (int type, var *var, expr *expr,
-			stmt *left, stmt *right, varlist *list)
-{
-	stmt *s = malloc(sizeof(stmt));
-	s->type = type;
-	s->var = var;
-	s->expr = expr;
-	s->left = left;
-	s->right = right;
-	s->list = list;
-	return s;
-}
-
-proc* make_proc (stmt *s/*, int type*/) /// TODO: initialize with the argument
-{
-	proc* p = malloc(sizeof(proc));
-	p->name = "testName";
-	p->next = NULL;
-	//stmt* ns = make_stmt (type/*PROC_ENDED*/, NULL, NULL, NULL, NULL, NULL);
-	p->statement = s/*ns*//*s*/;
-	p->var = NULL;
-	p->next = NULL;
-	return p;
-}
+var_t *program_vars;
+proc_t *program_procs;
 
 
 %}
@@ -136,14 +28,11 @@ proc* make_proc (stmt *s/*, int type*/) /// TODO: initialize with the argument
 
 %union {
 	char *i;
-	var *v;
-	varlist *l;
-	expr *e;
-	stmt *s;
-}
-
-%union {
-		int n;
+	var_t *v;
+	varlist_t *l;
+	expr_t *e;
+	stmt_t *s;
+	int n;
 }
 
 %type <v> declist
@@ -165,50 +54,70 @@ proc* make_proc (stmt *s/*, int type*/) /// TODO: initialize with the argument
 
 %%
 
-prog	: prog_vars proc  { }
+prog : prog_vars proc  { }
 
-prog_vars	: VAR declist ';'   { var* tmp = program_vars; program_vars = $2; program_vars->next = tmp; }
-     | prog_vars prog_vars {}
+prog_vars :
+	VAR declist ';'
+		{ var_t* tmp = program_vars; program_vars = $2; program_vars->next = tmp; }
+	| prog_vars prog_vars {  }
 
-proc	: PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = make_proc($2); program_procs->next = tmp; }
-	 | proc proc {}
+proc :
+	PROC_BEGIN stmt PROC_END
+		{ proc_t* tmp = program_procs; program_procs = make_proc($2, program_vars, program_procs); program_procs->next = tmp; }
+	| proc proc {  }
 
-vars	: VAR declist ';'	{ var* tmp = program_procs->var; program_procs->var = $2; program_procs->var = tmp; }
-	 | vars vars {}
+vars :
+	VAR declist ';'
+		{ var_t* tmp = program_procs->var; program_procs->var = $2; program_procs->var = tmp; }
+	| vars vars {  }
 
-declist	: IDENT			{ $$ = make_ident($1); }
-	| declist ',' IDENT	{ ($$ = make_ident($3))->next = $1; }
+declist :
+	IDENT
+		{ $$ = make_ident($1, program_vars, program_procs); }
+	| declist ',' IDENT
+		{ ($$ = make_ident($3, program_vars, program_procs))->next = $1; }
 	//| declist ';' 'var' IDENT { ($$ = make_ident($4))->next = $1; }
 
-stmt	: assign
+stmt :
+	assign
 	| stmt ';' stmt	
 		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
-	| WHILE expr DO stmt OD
-		{ $$ = make_stmt(WHILE,NULL,$2,$4,NULL,NULL); }
-	| IF expr THEN stmt FI
-		{ $$ = make_stmt(IF,NULL,$2,$4,NULL,NULL); }
-	| IF expr THEN stmt ELSE stmt FI
-		{ $$ = make_stmt(IF,NULL,$2,$4,$6,NULL); }
 	| PRINT varlist
 		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2); }
 
-assign	: IDENT ASSIGN expr
-		{ $$ = make_stmt(ASSIGN,find_ident($1),$3,NULL,NULL,NULL); }
+assign :
+	IDENT ASSIGN expr
+		{ $$ = make_stmt(ASSIGN,find_ident($1, program_vars, program_procs),$3,NULL,NULL,NULL); }
 
-varlist	: IDENT			{ $$ = make_varlist($1); }
-	| varlist ',' IDENT	{ ($$ = make_varlist($3))->next = $1; }
+varlist :
+	IDENT
+		{ $$ = make_varlist($1, program_vars, program_procs); }
+	| varlist ',' IDENT
+		{ ($$ = make_varlist($3, program_vars, program_procs))->next = $1; }
 
-expr	: CST { $$ = make_expr($1,NULL,NULL,NULL); }
-	| IDENT		{ $$ = make_expr(0,find_ident($1),NULL,NULL); }
-	| expr XOR expr	{ $$ = make_expr(XOR,NULL,$1,$3); }
-	| expr OR expr	{ $$ = make_expr(OR,NULL,$1,$3); }
-	| expr EQUAL expr	{ $$ = make_expr(EQUAL,NULL,$1,$3); }
-	| expr ADD expr	{ $$ = make_expr(ADD,NULL,$1,$3); }
-	| expr AND expr	{ $$ = make_expr(AND,NULL,$1,$3); }
-	| NOT expr	{ $$ = make_expr(NOT,NULL,$2,NULL); }
-	| TRUE		{ $$ = make_expr(TRUE,NULL,NULL,NULL); }
-	| FALSE		{ $$ = make_expr(FALSE,NULL,NULL,NULL); }
-	| '(' expr ')'	{ $$ = $2; }
+expr :
+	CST
+		{ $$ = make_expr($1,NULL,NULL,NULL); }
+	| IDENT
+		{ $$ = make_expr(0,find_ident($1, program_vars, program_procs),NULL,NULL); }
+	| expr XOR expr
+		{ $$ = make_expr(XOR,NULL,$1,$3); }
+	| expr OR expr
+		{ $$ = make_expr(OR,NULL,$1,$3); }
+	| expr EQUAL expr
+		{ $$ = make_expr(EQUAL,NULL,$1,$3); }
+	| expr ADD expr
+		{ $$ = make_expr(ADD,NULL,$1,$3); }
+	| expr AND expr
+		{ $$ = make_expr(AND,NULL,$1,$3); }
+	| NOT expr
+		{ $$ = make_expr(NOT,NULL,$2,NULL); }
+	| TRUE
+		{ $$ = make_expr(TRUE,NULL,NULL,NULL); }
+	| FALSE
+		{ $$ = make_expr(FALSE,NULL,NULL,NULL); }
+	| '(' expr ')'
+		{ $$ = $2; }
 
 %%
 
@@ -217,7 +126,7 @@ expr	: CST { $$ = make_expr($1,NULL,NULL,NULL); }
 /****************************************************************************/
 /* programme interpreter      :                                             */
 
-int eval (expr *e)
+int eval (expr_t *e)
 {
 	switch (e->type)
 	{
@@ -233,7 +142,7 @@ int eval (expr *e)
 	}
 }
 
-void print_vars (varlist *l)
+void print_vars (varlist_t *l)
 {
 	if (!l) return;
 	print_vars(l->next);
@@ -252,7 +161,7 @@ void debug(char* s)
 }
 
 // il faut pas éxécuter processus 1 puis 2 car sinon ça risque de s'interbloquer donc faut faire un peu de 1 puis un peu de 2 et ainsi de suite
-void execute_step(stmt *s)
+void execute_step(stmt_t *s)
 {
 	debug("doing: ");
 	switch(s->type)
@@ -289,7 +198,7 @@ void execute_step(stmt *s)
     }
 }
 
-void execute (stmt *s)
+void execute (stmt_t *s)
 {
 	switch(s->type)
 	{
@@ -316,7 +225,7 @@ void execute (stmt *s)
 	}
 }
 
-bool is_a_proc_needing_execute(proc *p)
+bool is_a_proc_needing_execute(proc_t *p)
 {
 	printf("is_a_proc_needing_execute a\n");
 	if (!p) return false;
@@ -326,18 +235,18 @@ bool is_a_proc_needing_execute(proc *p)
 	return (p->statement != NULL && p->statement->type != PROC_ENDED) || is_a_proc_needing_execute(p->next);
 }
 
-unsigned int proc_size_aux(proc *p, unsigned int acc)
+unsigned int proc_size_aux(proc_t *p, unsigned int acc)
 {
 	if (!p) return acc;
 	return proc_size_aux(p->next, acc + 1);
 }
 
-unsigned int get_proc_size(proc *p)
+unsigned int get_proc_size(proc_t *p)
 {
 	return proc_size_aux(p, 0);
 }
 
-proc* get_proc(proc *p, unsigned int proc_id)
+proc_t* get_proc(proc_t *p, unsigned int proc_id)
 {
 	return proc_id == 0 ? p : get_proc(p->next, proc_id--);
 }
@@ -361,7 +270,7 @@ int main (int argc, char **argv)
 			printf("executing stuff...\n");
 			int r = rand() % proc_size;
 			printf("executing proc %i\n", r);
-			proc* p = get_proc(program_procs, r);
+			proc_t* p = get_proc(program_procs, r);
 			printf("I got the proc I need to see me through\n");
     		execute_step(p->statement);
 		}
