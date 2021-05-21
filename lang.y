@@ -59,12 +59,14 @@ typedef struct proc
 
 var *program_vars;
 proc *program_procs;
+bool is_in_a_proc = false;
 
 /****************************************************************************/
 /* Functions for settting up data structures at parse time.                 */
 
 var* make_ident (char *s)
 {
+	debug("make_ident...\n");
 	var *v = malloc(sizeof(var));
 	v->name = s;
 	v->value = 0;	// make variable false initially
@@ -72,12 +74,56 @@ var* make_ident (char *s)
 	return v;
 }
 
+var* find_ident_from_var (char *s, var* vTmp, bool violent)
+{
+	//if(vTmp == NULL) { yyerror("vTmp NULL"); exit(1); }
+	if(!vTmp) return NULL;
+	debug("find_ident_from_var (%s)...\n", vTmp->name);
+	var* v = vTmp; // otherwise might change original one
+	while (v && strcmp(v->name, s)/* && printf("v (%s)", v->name)*/) v = v->next;
+    if (!v) { if(violent) { yyerror("undeclared variable"); exit(1); } else return NULL; }
+    return v;
+}
+
+var* find_global_ident (char *s)
+{
+	debug("find_global_ident...\n");
+    return find_ident_from_var (s, program_vars, true);
+}
+
+var* find_local_ident (char *s)
+{
+	debug("find_local_ident a\n", s);
+	proc* p = program_procs;
+	debug("find_local_ident b\n");
+	var* v = p->var;
+	if(v == NULL) debug("no local variables found !\n");
+	debug("find_local_ident c\n");
+	return find_ident_from_var (s, v, false);
+}
+
 var* find_ident (char *s)
 {
-	var *v = program_vars;
-	while (v && strcmp(v->name,s)) v = v->next;
-	if (!v) { yyerror("undeclared variable"); exit(1); }
+	debug("find_ident (%s)...\n", s); // si pas de "\n" ça n'affiche pas forcément u_u
+	var* v = find_local_ident (s);
+	if(v == NULL) { debug("%s not found locally, looking globally...\n", s); v = find_global_ident (s); }
+	if(v == NULL) { yyerror("undeclared variable"); exit(1); }
 	return v;
+}
+
+void print_variables (var *v)
+{
+	if(v != NULL) { printf("%s %i\n", v->name, v->value); print_variables(v->next); }
+}
+
+void print_local_variables ()
+{
+	print_variables (program_procs->var);
+}
+
+void print_global_variables ()
+{
+	print_variables (program_vars);
 }
 
 varlist* make_varlist (char *s)
@@ -112,18 +158,30 @@ stmt* make_stmt (int type, var *var, expr *expr,
 	return s;
 }
 
-proc* make_proc (stmt *s/*, int type*/) /// TODO: initialize with the argument
+proc* make_proc (/*stmt *s*//*, int type*//*, var* v*/) /// TODO: initialize with the argument
 {
+	debug("make_proc\n");
 	proc* p = malloc(sizeof(proc));
 	p->name = "testName";
 	p->next = NULL;
 	//stmt* ns = make_stmt (type/*PROC_ENDED*/, NULL, NULL, NULL, NULL, NULL);
-	p->statement = s/*ns*//*s*/;
-	p->var = NULL;
+	p->statement = NULL/*ns*//*s*/;
+	p->var = NULL/*v*/;
 	p->next = NULL;
 	return p;
 }
 
+void add_program_vars (var *v)
+{
+	if(program_vars == NULL)
+		program_vars = v;
+	else
+	{
+		var *program_vars_tmp = program_vars;
+		while(program_vars_tmp->next != NULL) program_vars_tmp = program_vars_tmp->next;
+		program_vars_tmp->next = v;
+	}
+}
 
 %}
 
@@ -149,6 +207,7 @@ proc* make_proc (stmt *s/*, int type*/) /// TODO: initialize with the argument
 %type <v> declist
 %type <l> varlist
 %type <e> expr
+%type <v> vars
 %type <s> stmt assign
 
 %token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI ELSE THEN PROC_BEGIN PROC_END PROC_ENDED
@@ -165,15 +224,27 @@ proc* make_proc (stmt *s/*, int type*/) /// TODO: initialize with the argument
 
 %%
 
-prog	: prog_vars proc  { }
+prog	:  proc_whole { }
 
-prog_vars	: VAR declist ';'   { var* tmp = program_vars; program_vars = $2; program_vars->next = tmp; }
+prog	: prog_vars proc_whole  { }
+
+prog_vars	: VAR declist ';'   { /*program_vars = */add_program_vars($2); /*var* tmp = program_vars; program_vars = $2; program_vars->next = tmp;*/ }
      | prog_vars prog_vars {}
 
-proc	: PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = make_proc($2); program_procs->next = tmp; }
-	 | proc proc {}
+//proc    : PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = make_proc($2); program_procs->next = tmp; }
+//     | proc proc {}
 
-vars	: VAR declist ';'	{ var* tmp = program_procs->var; program_procs->var = $2; program_procs->var = tmp; }
+proc_whole	: proc_begin proc proc_end {}
+
+proc_begin	: PROC_BEGIN { debug("proc_begin...\n"); if(is_in_a_proc) { yyerror("already in a process !\n"); exit(1); } proc* tmp = program_procs; program_procs = make_proc(/*$1*/); program_procs->next = tmp; is_in_a_proc = true; }
+
+proc	: vars stmt { debug("procing a...\n"); program_procs->statement = $2; }
+
+proc	: stmt { debug("procing b...\n"); program_procs->statement = $1; }
+
+proc_end	: PROC_END { debug("proc_end...\n"); if(!is_in_a_proc) { yyerror("not in a process !\n"); exit(1);} is_in_a_proc = false; }
+
+vars	: VAR declist ';'	{ debug("vars...\n"); var* tmp = program_procs->var; if(program_procs->var == NULL) debug("ppVar NULL\n"); program_procs->var = $2; if(program_procs->var == NULL) debug("ppVar STILL NULL\n"); program_procs->var->next = tmp; } // i forgot the next lol
 	 | vars vars {}
 
 declist	: IDENT			{ $$ = make_ident($1); }
@@ -221,15 +292,15 @@ int eval (expr *e)
 {
 	switch (e->type)
 	{
-		case TRUE: return 1;
-		case FALSE: return 0;
-		case XOR: return eval(e->left) ^ eval(e->right);
-		case OR: return eval(e->left) || eval(e->right);
-		case EQUAL: return eval(e->left) == eval(e->right);
-		case ADD: return eval(e->left) + eval(e->right);
-		case AND: return eval(e->left) && eval(e->right);
-		case NOT: return !eval(e->left);
-		case 0: return e->var->value;
+		case TRUE: debug("TRUE\n"); return 1;
+		case FALSE: debug("FALSE\n"); return 0;
+		case XOR: debug("XOR\n"); return eval(e->left) ^ eval(e->right);
+		case OR: debug("OR\n"); return eval(e->left) || eval(e->right);
+		case EQUAL: debug("EQUAL\n"); return eval(e->left) == eval(e->right);
+		case ADD: debug("ADD\n"); return eval(e->left) + eval(e->right);
+		case AND: debug("AND\n"); return eval(e->left) && eval(e->right);
+		case NOT: debug("NOT\n"); return !eval(e->left);
+		case 0: debug("ZERO\n"); if(e->var == NULL) debug("e->var is NULL\n"); return e->var->value;
 	}
 }
 
@@ -248,7 +319,7 @@ void print_vars (varlist *l)
 
 void debug(char* s)
 {
-	//printf(s);
+	printf(s);
 }
 
 // il faut pas éxécuter processus 1 puis 2 car sinon ça risque de s'interbloquer donc faut faire un peu de 1 puis un peu de 2 et ainsi de suite
@@ -269,12 +340,19 @@ void execute_step(stmt *s)
 			s->right = NULL;*/
             break;
         case WHILE:
-			debug("WHILE\n");
+			debug("WHILE a\n");
             //if (eval(s->expr)) execute_step(s->left);
-			while (eval(s->expr)) execute_step(s->left);
+			while (eval(s->expr))
+			{
+				debug("WHILE b\n");
+				execute_step(s->left);
+				debug("WHILE c\n");
+			}
 			//debug("yeah\n");
 			//return; // this is so violent
+			debug("WHILE d\n");
 			s->type = PROC_ENDED;
+			debug("WHILE e\n");
             break;
         case IF:
 			debug("IF\n");
@@ -323,6 +401,8 @@ bool is_a_proc_needing_execute(proc *p)
 	printf("is_a_proc_needing_execute b\n");
 	//stmt *s = p->statement;
 	//printf("is_a_proc_needing_execute c\n");
+	if(p->statement == NULL) debug("p->statement is NULL\n");
+	if(p->statement != NULL && p->statement->type == PROC_ENDED) debug("p->statement->type == PROC_ENDED\n");
 	return (p->statement != NULL && p->statement->type != PROC_ENDED) || is_a_proc_needing_execute(p->next);
 }
 

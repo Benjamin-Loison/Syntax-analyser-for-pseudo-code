@@ -4,30 +4,30 @@ DIG	[0-9]
 
 %%
 
-"var"	{ return VAR; }
-"while"	{ return WHILE; }
-"do"	{ return DO; }
-"od"	{ return OD; }
-"print"	{ return PRINT; }
-"true"	{ return TRUE; }
-"false"	{ return FALSE; }
-"if"	{ return IF; }
-"then"	{ return THEN; }
-"else"	{ return ELSE; }
-"fi"	{ return FI; }
+"var"	{ debug("var\n"); return VAR; }
+"while"	{ debug("while\n"); return WHILE; }
+"do"	{ debug("do\n"); return DO; }
+"od"	{ debug("od\n"); return OD; }
+"print"	{ debug("print\n"); return PRINT; }
+"true"	{ debug("true\n"); return TRUE; }
+"false"	{ debug("false\n"); return FALSE; }
+"if"	{ debug("if\n"); return IF; }
+"then"	{ debug("then\n"); return THEN; }
+"else"	{ debug("else\n"); return ELSE; }
+"fi"	{ debug("fi\n"); return FI; }
 
-":="	{ return ASSIGN; }
-"^"	{ return XOR; }
-"||"	{ return OR; }
-"=="	{ return EQUAL; }
-"+"   { return ADD; }
-"&&"	{ return AND; }
-"!"	{ return NOT; }
+":="	{ debug(":=\n"); return ASSIGN; }
+"^"	{ debug("^\n"); return XOR; }
+"||"	{ debug("||\n"); return OR; }
+"=="	{ debug("==\n"); return EQUAL; }
+"+"   { debug("+\n"); return ADD; }
+"&&"	{ debug("&&\n"); return AND; }
+"!"	{ debug("!\n"); return NOT; }
 
-"proc "[a-z][a-z0-9]* { return PROC_BEGIN; }
-"end" { return PROC_END; }
-[a-z_][a-z0-9_]* { yylval.i = strdup(yytext); return IDENT; }
-[0-9]* { yylval.i = atoi(yytext); return CST; }
+"proc "[a-z][a-z0-9]* { debug("proc\n"); return PROC_BEGIN; }
+"end" { debug("end\n"); return PROC_END; }
+[a-z_][a-z0-9_]* { debug("ident\n"); yylval.i = strdup(yytext); return IDENT; }
+[0-9]* { debug("cst\n"); yylval.i = atoi(yytext); return CST; }
 
 
 [	 \n]   { /* ignore */ }
