@@ -3,17 +3,21 @@
 void yyerror(const char *s)
 {
 	fflush(stdout);
-	fprintf(stderr, "%s\n", s);
+	fprintf(stderr, "!!! ERROR: %s\n", s);
 }
 
 void debug(const char* loc, const char* msg, const char *precision)
 {
-	printf("[%20s]: %s (%s)\n", loc, msg, precision);
+	char long_dots[100];
+	sprintf(long_dots, "%s ............................................................", msg);
+	printf("[%20s]: %.41s (%s)\n", loc, long_dots, precision);
 }
 
 void clean_debug(const char* msg, const char *precision)
 {
-	printf("%24s| %s (%s)\n", "", msg, precision);
+	char long_dots[100];
+	sprintf(long_dots, "%s ............................................................", msg);
+	printf("%24s| %.39s (%s)\n", "", long_dots, precision);
 }
 
 var_t* make_ident (char *s)

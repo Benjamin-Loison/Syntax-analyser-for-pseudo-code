@@ -71,13 +71,14 @@ proc_whole :
 proc_begin :
 	PROC_BEGIN
 		{
-			debug("proc", "begin", (char*)((long)$1 + 5));
+			char *proc_name = (char*)((long)($1) + 5);
+			debug("proc", "begin", proc_name);
 			if(is_in_a_proc) {
 				yyerror("already in a process !\n");
 				exit(1);
 			}
 			proc_t* tmp = program_procs;
-			program_procs = make_proc($1);
+			program_procs = make_proc(proc_name);
 			program_procs->next = tmp;
 			is_in_a_proc = 1;
 		}
