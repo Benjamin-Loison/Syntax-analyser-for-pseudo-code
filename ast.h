@@ -47,24 +47,32 @@ typedef struct proc
 } proc_t;
 
 
-typedef struct cond
-{
-	expr_t *expr;
-	stmt_t *stmt;
-	struct cond *next;
-} cond_t;
+/****************************************************************************/
+/* Debugging and Error displaying functions                                 */
+
+
+void yyerror(const char*);
+void debug(char* s);
 
 
 
 /****************************************************************************/
 /* Functions for settting up data structures at parse time.                 */
 
-void yyerror(const char*);
-var_t* make_ident (char*, var_t*, proc_t*);
-var_t* find_ident (char*, var_t*, proc_t*);
-varlist_t* make_varlist (char*, var_t*, proc_t*);
-expr_t* make_expr (int, var_t*, expr_t*, expr_t*);
-stmt_t* make_stmt (int, var_t*, expr_t*, stmt_t*, stmt_t*, varlist_t*);
-proc_t* make_proc (stmt_t*, var_t*, proc_t*);
+var_t* make_ident (char *s);
+var_t* find_ident_from_var (char *s, var_t* vTmp, int violent);
+var_t* find_global_ident (char *s, program_vars);
+var_t* find_local_ident (char *s, proc_t *program_procs);
+var_t* find_ident (char *s, proc_t* program_procs, proc_t* program_vars);
+void print_variables (var_t *v);
+void print_local_variables (proc_t *program_procs);
+void print_global_variables (proc_t *program_procs);
+varlist_t* make_varlist (char *s);
+expr_t* make_expr (int type, var_t *var, expr_t *left, expr_t *right);
+stmt_t* make_stmt (int type, var_t *var, expr_t *expr,
+			stmt_t *left, stmt_t *right, varlist_t *list);
+proc* make_proc (/*stmt *s*//*, int type*//*, var* v*/) /// TODO: initialize with the argument
+void add_program_vars (var_t *v, var_t* program_vars);
+
 
 #endif// __AST_H_

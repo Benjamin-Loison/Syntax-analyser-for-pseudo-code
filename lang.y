@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdbool.h>
 #include "ast.h"
 
 int yylex();
@@ -15,7 +14,7 @@ int yylex();
 
 var_t *program_vars;
 proc_t *program_procs;
-
+int is_in_a_proc = 0;
 
 %}
 
@@ -53,23 +52,63 @@ proc_t *program_procs;
 %right NOT
 
 %%
-
-prog : prog_vars proc  { }
+prog :
+	proc_whole {}
+	| prog_vars proc_whole  {}
 
 prog_vars :
 	VAR declist ';'
-		{ var_t* tmp = program_vars; program_vars = $2; program_vars->next = tmp; }
-	| prog_vars prog_vars {  }
+		{ add_program_vars($2); }
+	| prog_vars prog_vars {}
+
+//proc    : PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = make_proc($2); program_procs->next = tmp; }
+//     | proc proc {}
+
+proc_whole :
+	proc_begin proc proc_end {}
+
+proc_begin :
+	PROC_BEGIN
+		{
+			debug("proc_begin...\n");
+			if(is_in_a_proc) {
+				yyerror("already in a process !\n");
+				exit(1);
+			}
+			proc* tmp = program_procs;
+			program_procs = make_proc(/*$1*/);
+			program_procs->next = tmp;
+			is_in_a_proc = 1;
+		}
 
 proc :
-	PROC_BEGIN stmt PROC_END
-		{ proc_t* tmp = program_procs; program_procs = make_proc($2, program_vars, program_procs); program_procs->next = tmp; }
-	| proc proc {  }
+	vars stmt
+		{ debug("procing a...\n"); program_procs->statement = $2; }
+	| stmt
+		{ debug("procing b...\n"); program_procs->statement = $1; }
+
+proc_end :
+	PROC_END
+		{
+			debug("proc_end...\n");
+			if(!is_in_a_proc) {
+				yyerror("not in a process !\n");
+				exit(1);
+			}
+			is_in_a_proc = 0;
+		}
 
 vars :
 	VAR declist ';'
-		{ var_t* tmp = program_procs->var; program_procs->var = $2; program_procs->var = tmp; }
-	| vars vars {  }
+		{
+			debug("vars...\n");
+			var* tmp = program_procs->var;
+			if(program_procs->var == NULL) debug("ppVar NULL\n");
+			program_procs->var = $2;
+			if(program_procs->var == NULL) debug("ppVar STILL NULL\n");
+			program_procs->var->next = tmp; // i forgot the next lol
+		}
+	 | vars vars {}
 
 declist :
 	IDENT
@@ -85,20 +124,19 @@ stmt :
 	| PRINT varlist
 		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2, NULL); }
 	| IF cond FI
-		{ $$ = $2; }
+		{ $$ = make_stmt(IF, NULL, NULL, $2, NULL, NULL); }
 	| DO cond OD
-		{ $$ = make_stmt(DO, NULL, NULL, NULL, NULL, NULL, make_cond($2)) }
+		{ $$ = make_stmt(DO, NULL, NULL, $2, NULL, NULL); }
 
 cond :
 	COND_BEGIN expr COND_END stmt
 		{ $$ = make_stmt(COND, NULL, $2, $4, NULL, NULL, NULL); }
-	cond cond
-		{ $$ = make_stmt(COND, NULL, NULL, $1, $2, NULL, NULL); }
+	| cond cond
+		{ $$ = make_stmt(COND, NULL, NULL, $1, $2, NULL); }
 
 assign :
 	IDENT ASSIGN expr
-		{ $$ = make_stmt(ASSIGN,find_ident($1, program_vars,
- program_procs),$3,NULL,NULL,NULL, NULL); }
+		{ $$ = make_stmt(ASSIGN,find_ident($1, program_vars, program_procs),$3,NULL,NULL,NULL, NULL); }
 
 varlist :
 	IDENT
@@ -141,15 +179,15 @@ int eval (expr_t *e)
 {
 	switch (e->type)
 	{
-		case TRUE: return 1;
-		case FALSE: return 0;
-		case XOR: return eval(e->left) ^ eval(e->right);
-		case OR: return eval(e->left) || eval(e->right);
-		case EQUAL: return eval(e->left) == eval(e->right);
-		case ADD: return eval(e->left) + eval(e->right);
-		case AND: return eval(e->left) && eval(e->right);
-		case NOT: return !eval(e->left);
-		case 0: return e->var->value;
+		case TRUE: debug("TRUE\n"); return 1;
+		case FALSE: debug("FALSE\n"); return 0;
+		case XOR: debug("XOR\n"); return eval(e->left) ^ eval(e->right);
+		case OR: debug("OR\n"); return eval(e->left) || eval(e->right);
+		case EQUAL: debug("EQUAL\n"); return eval(e->left) == eval(e->right);
+		case ADD: debug("ADD\n"); return eval(e->left) + eval(e->right);
+		case AND: debug("AND\n"); return eval(e->left) && eval(e->right);
+		case NOT: debug("NOT\n"); return !eval(e->left);
+		case 0: debug("ZERO\n"); if(e->var == NULL) debug("e->var is NULL\n"); return e->var->value;
 	}
 }
 
@@ -165,11 +203,6 @@ void print_vars (varlist_t *l)
 	if (!proc) return;
 	print
 }*/
-
-void debug(char* s)
-{
-	//printf(s);
-}
 
 // il faut pas éxécuter processus 1 puis 2 car sinon ça risque de s'interbloquer donc faut faire un peu de 1 puis un peu de 2 et ainsi de suite
 void execute_step(stmt_t *s)
@@ -216,13 +249,15 @@ void execute (stmt_t *s)
 	}
 }
 
-bool is_a_proc_needing_execute(proc_t *p)
+int is_a_proc_needing_execute(proc_t *p)
 {
 	printf("is_a_proc_needing_execute a\n");
-	if (!p) return false;
+	if (!p) return 0;
 	printf("is_a_proc_needing_execute b\n");
 	//stmt *s = p->statement;
 	//printf("is_a_proc_needing_execute c\n");
+	if(p->statement == NULL) debug("p->statement is NULL\n");
+	if(p->statement != NULL && p->statement->type == PROC_ENDED) debug("p->statement->type == PROC_ENDED\n");
 	return (p->statement != NULL && p->statement->type != PROC_ENDED) || is_a_proc_needing_execute(p->next);
 }
 
@@ -263,7 +298,7 @@ int main (int argc, char **argv)
 			printf("executing proc %i\n", r);
 			proc_t* p = get_proc(program_procs, r);
 			printf("I got the proc I need to see me through\n");
-    		execute_step(p->statement);
+			execute_step(p->statement);
 		}
 		//execute(program_stmts);
 	}
