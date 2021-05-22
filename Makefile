@@ -9,7 +9,8 @@ $(EXEC): langlex.c lang.y
 	mv -f y.tab.c lang.c
 	cc -c -o lang.o lang.c
 	cc -c -o ast.o ast.c
-	cc lang.o ast.o -o lang
+	cc -c -o printer.o printer.c
+	cc lang.o ast.o printer.o -o lang
 
 langlex.c: langlex.l
 	lex  -t langlex.l > langlex.c
