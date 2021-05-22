@@ -8,7 +8,7 @@ void pprint(const char* loc, const char* msg)
 	printf("\e[38;5;8m");
 
 	// Indent the text 
-	for(int i = 0 ; i < indentation ; i ++) printf(" |");
+	for(int i = 0 ; i < indentation ; i ++) printf("  | ");
 	
 	// Print the message (emphase on the location)
 	printf("\e[38;5;202m%s\e[0m: %s\n", loc, msg);

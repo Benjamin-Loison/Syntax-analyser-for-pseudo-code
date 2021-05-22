@@ -11,9 +11,14 @@ void debug(const char* loc, const char* msg, const char *precision)
 	printf("[%20s]: %s (%s)\n", loc, msg, precision);
 }
 
+void clean_debug(const char* msg, const char *precision)
+{
+	printf("%24s| %s (%s)\n", "", msg, precision);
+}
+
 var_t* make_ident (char *s)
 {
-	debug("make_ident", s, "");
+	debug("make_ident", "new variable", s);
 	var_t *v = malloc(sizeof(var_t));
 	v->name = s;
 	v->value = 0;	// make variable null initially
@@ -25,7 +30,7 @@ var_t* find_ident_from_var (char *s, var_t* vTmp, int violent)
 {
 	//if(vTmp == NULL) { yyerror("vTmp NULL"); exit(1); }
 	if(!vTmp) return NULL;
-	debug("find_ident_from_var", "variable_name", vTmp->name);
+	clean_debug("variable_name", vTmp->name);
 	var_t* v = vTmp; // otherwise might change original one
 	while (v && strcmp(v->name, s)/* && printf("v (%s)", v->name)*/) v = v->next;
 	if (!v) { if(violent) { yyerror("undeclared variable"); exit(1); } else return NULL; }
@@ -34,24 +39,22 @@ var_t* find_ident_from_var (char *s, var_t* vTmp, int violent)
 
 var_t* find_global_ident (char *s, var_t* program_vars)
 {
-	debug("find_global_ident", "...", "");
+	clean_debug("looking gloablly", s);
 	return find_ident_from_var (s, program_vars, 1);
 }
 
 var_t* find_local_ident (char *s, proc_t *program_procs)
 {
-	debug("find_local_ident", "a", s);
+	clean_debug("looking locally", s);
 	proc_t* p = program_procs;
-	debug("find_local_ident", "b", s);
 	var_t* v = p->var;
-	if(v == NULL) debug("find_local_ident", "no local variables found !", "");
-	debug("find_local_ident", "c", "");
+	if(v == NULL) clean_debug("no local variables found !", s);
 	return find_ident_from_var (s, v, 0);
 }
 
 var_t* find_ident (char *s, proc_t* program_procs, var_t* program_vars)
 {
-	debug("find_ident", "...", s); // si pas de "\n" ça n'affiche pas forcément u_u
+	debug("find_ident", "looking", s); // si pas de "\n" ça n'affiche pas forcément u_u
 	var_t* v = find_local_ident (s, program_procs);
 	if(!v) {
 		debug("find_ident", "unfound locally, looking globally", s);
@@ -89,7 +92,6 @@ varlist_t* make_varlist (char *s, proc_t* program_procs, var_t* program_vars)
 
 expr_t* make_expr (int type, var_t *var, expr_t *left, expr_t *right)
 {
-	if(type == E_CST) printf("\nCST !!!!!!%d\n\n", (int)(long)var);
 	expr_t *e = malloc(sizeof(expr_t));
 	e->type = type;
 	e->var = var;
@@ -111,11 +113,11 @@ stmt_t* make_stmt (int type, var_t *var, expr_t *expr,
 	return s;
 }
 
-proc_t* make_proc () /// TODO: initialize with the argument
+proc_t* make_proc (char* name) /// TODO: initialize with the argument
 {
-	debug("make_proc", "", "");
+	debug("make_proc", "New proc", name);
 	proc_t* p = malloc(sizeof(proc_t));
-	p->name = "testName";
+	p->name = name;
 	p->next = NULL;
 	//stmt* ns = make_stmt (type/*PROC_ENDED*/, NULL, NULL, NULL, NULL, NULL);
 	p->statement = NULL/*ns*//*s*/;

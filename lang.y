@@ -40,8 +40,8 @@ int is_in_a_proc = 0;
 %type <e> expr
 %type <s> stmt assign cond
 
-%token SKIP VAR DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI PROC_BEGIN PROC_END PROC_ENDED COND_BEGIN COND_END
-%token <i> IDENT
+%token SKIP VAR DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI PROC_END PROC_ENDED COND_BEGIN COND_END
+%token <i> IDENT PROC_BEGIN
 %token <n> CST
 
 %left ';'
@@ -71,13 +71,13 @@ proc_whole :
 proc_begin :
 	PROC_BEGIN
 		{
-			debug("proc", "begin", "");
+			debug("proc", "begin", (char*)((long)$1 + 5));
 			if(is_in_a_proc) {
 				yyerror("already in a process !\n");
 				exit(1);
 			}
 			proc_t* tmp = program_procs;
-			program_procs = make_proc(/*$1*/);
+			program_procs = make_proc($1);
 			program_procs->next = tmp;
 			is_in_a_proc = 1;
 		}

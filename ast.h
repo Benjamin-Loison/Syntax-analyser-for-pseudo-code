@@ -82,7 +82,7 @@ stmt_t* make_stmt (int type, var_t *var, expr_t *expr,
 			stmt_t *left, stmt_t *right, varlist_t *list);
 
 // Proc related function(~~s~~)
-proc_t* make_proc (); /// TODO: initialize with the argument
+proc_t* make_proc (char*); /// TODO: initialize with the argument
 
 
 #endif// __AST_H_
