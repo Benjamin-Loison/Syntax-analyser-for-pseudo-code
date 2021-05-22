@@ -58,7 +58,7 @@ prog :
 
 prog_vars :
 	VAR declist ';'
-		{ add_program_vars($2); }
+		{ add_program_vars($2, program_vars); }
 	| prog_vars prog_vars {}
 
 //proc    : PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = make_proc($2); program_procs->next = tmp; }
@@ -70,12 +70,12 @@ proc_whole :
 proc_begin :
 	PROC_BEGIN
 		{
-			debug("proc_begin...\n");
+			debug("proc", "begin", "");
 			if(is_in_a_proc) {
 				yyerror("already in a process !\n");
 				exit(1);
 			}
-			proc* tmp = program_procs;
+			proc_t* tmp = program_procs;
 			program_procs = make_proc(/*$1*/);
 			program_procs->next = tmp;
 			is_in_a_proc = 1;
@@ -83,14 +83,14 @@ proc_begin :
 
 proc :
 	vars stmt
-		{ debug("procing a...\n"); program_procs->statement = $2; }
+		{ debug("proc", "procing a...", ""); program_procs->statement = $2; }
 	| stmt
-		{ debug("procing b...\n"); program_procs->statement = $1; }
+		{ debug("proc", "procing b...", ""); program_procs->statement = $1; }
 
 proc_end :
 	PROC_END
 		{
-			debug("proc_end...\n");
+			debug("proc", "end", "");
 			if(!is_in_a_proc) {
 				yyerror("not in a process !\n");
 				exit(1);
@@ -101,70 +101,70 @@ proc_end :
 vars :
 	VAR declist ';'
 		{
-			debug("vars...\n");
-			var* tmp = program_procs->var;
-			if(program_procs->var == NULL) debug("ppVar NULL\n");
+			debug("vars", "", "");
+			var_t* tmp = program_procs->var;
+			if(program_procs->var == NULL) debug("vars", "ppVar NULL", "");
 			program_procs->var = $2;
-			if(program_procs->var == NULL) debug("ppVar STILL NULL\n");
+			if(program_procs->var == NULL) debug("vars", "ppVar STILL NULL", "");
 			program_procs->var->next = tmp; // i forgot the next lol
 		}
 	 | vars vars {}
 
 declist :
 	IDENT
-		{ $$ = make_ident($1, program_vars, program_procs); }
+		{ $$ = make_ident($1); }
 	| declist ',' IDENT
-		{ ($$ = make_ident($3, program_vars, program_procs))->next = $1; }
+		{ ($$ = make_ident($3))->next = $1; }
 	//| declist ';' 'var' IDENT { ($$ = make_ident($4))->next = $1; }
 
 stmt :
 	assign
 	| stmt ';' stmt	
-		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL, NULL); }
+		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
 	| PRINT varlist
-		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2, NULL); }
+		{ $$ = make_stmt(S_PRINT,NULL,NULL,NULL,NULL,$2); }
 	| IF cond FI
-		{ $$ = make_stmt(IF, NULL, NULL, $2, NULL, NULL); }
+		{ $$ = make_stmt(S_IF, NULL, NULL, $2, NULL, NULL); }
 	| DO cond OD
-		{ $$ = make_stmt(DO, NULL, NULL, $2, NULL, NULL); }
+		{ $$ = make_stmt(S_DO, NULL, NULL, $2, NULL, NULL); }
 
 cond :
 	COND_BEGIN expr COND_END stmt
-		{ $$ = make_stmt(COND, NULL, $2, $4, NULL, NULL, NULL); }
+		{ $$ = make_stmt(S_COND, NULL, $2, $4, NULL, NULL); }
 	| cond cond
-		{ $$ = make_stmt(COND, NULL, NULL, $1, $2, NULL); }
+		{ $$ = make_stmt(S_COND, NULL, NULL, $1, $2, NULL); }
 
 assign :
 	IDENT ASSIGN expr
-		{ $$ = make_stmt(ASSIGN,find_ident($1, program_vars, program_procs),$3,NULL,NULL,NULL, NULL); }
+		{ $$ = make_stmt(S_ASSIGN,find_ident($1, program_procs, program_vars),$3,NULL,NULL, NULL); }
 
 varlist :
 	IDENT
-		{ $$ = make_varlist($1, program_vars, program_procs); }
+		{ $$ = make_varlist($1, program_procs, program_vars); }
 	| varlist ',' IDENT
-		{ ($$ = make_varlist($3, program_vars, program_procs))->next = $1; }
+		{ ($$ = make_varlist($3, program_procs, program_vars))->next = $1; }
 
 expr :
 	CST
 		{ $$ = make_expr($1,NULL,NULL,NULL); }
 	| IDENT
-		{ $$ = make_expr(0,find_ident($1, program_vars, program_procs),NULL,NULL); }
+		{ $$ = make_expr(E_OTHER,find_ident($1, program_procs, program_vars),NULL,NULL); }
 	| expr XOR expr
-		{ $$ = make_expr(XOR,NULL,$1,$3); }
+		{ $$ = make_expr(E_XOR,NULL,$1,$3); }
 	| expr OR expr
-		{ $$ = make_expr(OR,NULL,$1,$3); }
+		{ $$ = make_expr(E_OR,NULL,$1,$3); }
 	| expr EQUAL expr
-		{ $$ = make_expr(EQUAL,NULL,$1,$3); }
+		{ $$ = make_expr(E_EQUAL,NULL,$1,$3); }
 	| expr ADD expr
-		{ $$ = make_expr(ADD,NULL,$1,$3); }
+		{ $$ = make_expr(E_ADD,NULL,$1,$3); }
 	| expr AND expr
-		{ $$ = make_expr(AND,NULL,$1,$3); }
+		{ $$ = make_expr(E_AND,NULL,$1,$3); }
 	| NOT expr
-		{ $$ = make_expr(NOT,NULL,$2,NULL); }
+		{ $$ = make_expr(E_NOT,NULL,$2,NULL); }
 	| TRUE
-		{ $$ = make_expr(TRUE,NULL,NULL,NULL); }
+		{ $$ = make_expr(E_TRUE,NULL,NULL,NULL); }
 	| FALSE
-		{ $$ = make_expr(FALSE,NULL,NULL,NULL); }
+		{ $$ = make_expr(E_FALSE,NULL,NULL,NULL); }
 	| '(' expr ')'
 		{ $$ = $2; }
 
@@ -179,15 +179,15 @@ int eval (expr_t *e)
 {
 	switch (e->type)
 	{
-		case TRUE: debug("TRUE\n"); return 1;
-		case FALSE: debug("FALSE\n"); return 0;
-		case XOR: debug("XOR\n"); return eval(e->left) ^ eval(e->right);
-		case OR: debug("OR\n"); return eval(e->left) || eval(e->right);
-		case EQUAL: debug("EQUAL\n"); return eval(e->left) == eval(e->right);
-		case ADD: debug("ADD\n"); return eval(e->left) + eval(e->right);
-		case AND: debug("AND\n"); return eval(e->left) && eval(e->right);
-		case NOT: debug("NOT\n"); return !eval(e->left);
-		case 0: debug("ZERO\n"); if(e->var == NULL) debug("e->var is NULL\n"); return e->var->value;
+		case E_TRUE:  debug("eval", "TRUE", ""); return 1;
+		case E_FALSE: debug("eval", "FALSE", ""); return 0;
+		case E_XOR:   debug("eval", "XOR", ""); return eval(e->left) ^ eval(e->right);
+		case E_OR:    debug("eval", "OR", ""); return eval(e->left) || eval(e->right);
+		case E_EQUAL: debug("eval", "EQUAL", ""); return eval(e->left) == eval(e->right);
+		case E_ADD:   debug("eval", "ADD", ""); return eval(e->left) + eval(e->right);
+		case E_AND:   debug("eval", "AND", ""); return eval(e->left) && eval(e->right);
+		case E_NOT:   debug("eval", "NOT", ""); return !eval(e->left);
+		case E_OTHER: debug("eval", "ZERO", ""); if(e->var == NULL) debug("evel", "other", "e->var is NULL"); return e->var->value;
 	}
 }
 
@@ -207,24 +207,22 @@ void print_vars (varlist_t *l)
 // il faut pas éxécuter processus 1 puis 2 car sinon ça risque de s'interbloquer donc faut faire un peu de 1 puis un peu de 2 et ainsi de suite
 void execute_step(stmt_t *s)
 {
-	debug("doing: ");
 	switch(s->type)
     {
-        case ASSIGN:
-			debug("ASSIGN\n");
+        case S_ASSIGN:
+			debug("execute_step", "start", "ASSIGN");
             s->var->value = eval(s->expr);
             break;
         case ';':
-			debug(";\n");
+			debug("execute_step", "start", ";");
             execute_step(s->left);
 			execute_step(s->right);
             /*s->left = s->right;
 			s->right = NULL;*/
             break;
-        case PRINT:
-			debug("PRINT\n");
+        case S_PRINT:
+			debug("execute_step", "start", "PRINT");
             print_vars(s->list);
-            puts("");
             break;
     }
 }
@@ -233,18 +231,17 @@ void execute (stmt_t *s)
 {
 	switch(s->type)
 	{
-		case ASSIGN:
+		case S_ASSIGN:
 			s->var->value = eval(s->expr);
 			break;
 		case ';':
 			execute(s->left);
 			execute(s->right);
 			break;
-		case PRINT: 
+		case S_PRINT: 
 			print_vars(s->list);
-			puts("");
 			break;
-		case PROC_ENDED:
+		case S_PROC_ENDED:
 			break;
 	}
 }
@@ -256,8 +253,8 @@ int is_a_proc_needing_execute(proc_t *p)
 	printf("is_a_proc_needing_execute b\n");
 	//stmt *s = p->statement;
 	//printf("is_a_proc_needing_execute c\n");
-	if(p->statement == NULL) debug("p->statement is NULL\n");
-	if(p->statement != NULL && p->statement->type == PROC_ENDED) debug("p->statement->type == PROC_ENDED\n");
+	if(p->statement == NULL) debug("is proc needing", "p->statement", "NULL");
+	if(p->statement != NULL && p->statement->type == PROC_ENDED) debug("is proc needing", "p->statement->type", "PROC_ENDED");
 	return (p->statement != NULL && p->statement->type != PROC_ENDED) || is_a_proc_needing_execute(p->next);
 }
 

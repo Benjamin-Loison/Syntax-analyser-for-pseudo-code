@@ -6,14 +6,14 @@ void yyerror(const char *s)
 	fprintf(stderr, "%s\n", s);
 }
 
-void debug(char* s)
+void debug(const char* loc, const char* msg, const char *precision)
 {
-	printf(s);
+	printf("[%15s]: %s (%s)", loc, msg, precision);
 }
 
 var_t* make_ident (char *s)
 {
-	debug("make_ident...\n");
+	debug("make_ident", "...", "");
 	var_t *v = malloc(sizeof(var_t));
 	v->name = s;
 	v->value = 0;	// make variable null initially
@@ -25,36 +25,36 @@ var_t* find_ident_from_var (char *s, var_t* vTmp, int violent)
 {
 	//if(vTmp == NULL) { yyerror("vTmp NULL"); exit(1); }
 	if(!vTmp) return NULL;
-	debug("find_ident_from_var (%s)...\n", vTmp->name);
+	debug("find_ident_from_var", "variable_name", vTmp->name);
 	var_t* v = vTmp; // otherwise might change original one
 	while (v && strcmp(v->name, s)/* && printf("v (%s)", v->name)*/) v = v->next;
-    if (!v) { if(violent) { yyerror("undeclared variable"); exit(1); } else return NULL; }
-    return v;
+	if (!v) { if(violent) { yyerror("undeclared variable"); exit(1); } else return NULL; }
+	return v;
 }
 
-var_t* find_global_ident (char *s, program_vars)
+var_t* find_global_ident (char *s, var_t* program_vars)
 {
-	debug("find_global_ident...\n");
-    return find_ident_from_var (s, program_vars, 1);
+	debug("find_global_ident", "...", "");
+	return find_ident_from_var (s, program_vars, 1);
 }
 
 var_t* find_local_ident (char *s, proc_t *program_procs)
 {
-	debug("find_local_ident a\n", s);
+	debug("find_local_ident", "a", s);
 	proc_t* p = program_procs;
-	debug("find_local_ident b\n");
+	debug("find_local_ident", "b", s);
 	var_t* v = p->var;
-	if(v == NULL) debug("no local variables found !\n");
-	debug("find_local_ident c\n");
+	if(v == NULL) debug("find_local_ident", "no local variables found !", "");
+	debug("find_local_ident", "c", "");
 	return find_ident_from_var (s, v, 0);
 }
 
-var_t* find_ident (char *s, proc_t* program_procs, proc_t* program_vars)
+var_t* find_ident (char *s, proc_t* program_procs, var_t* program_vars)
 {
-	debug("find_ident (%s)...\n", s); // si pas de "\n" ça n'affiche pas forcément u_u
+	debug("find_ident", "...", s); // si pas de "\n" ça n'affiche pas forcément u_u
 	var_t* v = find_local_ident (s, program_procs);
 	if(!v) {
-		debug("%s not found locally, looking globally...\n", s);
+		debug("find_ident", "unfound locally, looking globally", s);
 		v = find_global_ident (s, program_vars);
 	}
 	if(!v) { yyerror("undeclared variable"); exit(1); }
@@ -73,14 +73,14 @@ void print_local_variables (proc_t *program_procs)
 	print_variables (program_procs->var);
 }
 
-void print_global_variables (proc_t *program_procs)
+void print_global_variables (var_t *program_vars)
 {
 	print_variables (program_vars);
 }
 
-varlist_t* make_varlist (char *s)
+varlist_t* make_varlist (char *s, proc_t* program_procs, var_t* program_vars)
 {
-	var_t *v = find_ident(s);
+	var_t *v = find_ident(s, program_procs, program_vars);
 	varlist_t *l = malloc(sizeof(varlist_t));
 	l->var = v;
 	l->next = NULL;
@@ -110,10 +110,10 @@ stmt_t* make_stmt (int type, var_t *var, expr_t *expr,
 	return s;
 }
 
-proc* make_proc (/*stmt *s*//*, int type*//*, var* v*/) /// TODO: initialize with the argument
+proc_t* make_proc () /// TODO: initialize with the argument
 {
-	debug("make_proc\n");
-	proc* p = malloc(sizeof(proc));
+	debug("make_proc", "", "");
+	proc_t* p = malloc(sizeof(proc_t));
 	p->name = "testName";
 	p->next = NULL;
 	//stmt* ns = make_stmt (type/*PROC_ENDED*/, NULL, NULL, NULL, NULL, NULL);
@@ -129,7 +129,7 @@ void add_program_vars (var_t *v, var_t* program_vars)
 		program_vars = v;
 	else
 	{
-		var *program_vars_tmp = program_vars;
+		var_t *program_vars_tmp = program_vars;
 		while(program_vars_tmp->next != NULL) program_vars_tmp = program_vars_tmp->next;
 		program_vars_tmp->next = v;
 	}
