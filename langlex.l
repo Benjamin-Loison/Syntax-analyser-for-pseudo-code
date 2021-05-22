@@ -14,6 +14,7 @@ DIG	[0-9]
 "fi"	{ return FI; }
 "::"	{ return COND_BEGIN; }
 "->"	{ return COND_END; }
+"skip"	{ return SKIP; }
 
 ":="	{ return ASSIGN; }
 "^"		{ return XOR; }

@@ -39,7 +39,7 @@ int is_in_a_proc = 0;
 %type <e> expr
 %type <s> stmt assign cond
 
-%token VAR DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI PROC_BEGIN PROC_END PROC_ENDED COND_BEGIN COND_END
+%token SKIP VAR DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI PROC_BEGIN PROC_END PROC_ENDED COND_BEGIN COND_END
 %token <i> IDENT
 %token <n> CST
 
@@ -127,6 +127,8 @@ stmt :
 		{ $$ = make_stmt(S_IF, NULL, NULL, $2, NULL, NULL); }
 	| DO cond OD
 		{ $$ = make_stmt(S_DO, NULL, NULL, $2, NULL, NULL); }
+	| SKIP
+		{ $$ = make_stmt(S_SKIP, NULL, NULL, NULL, NULL, NULL); }
 
 cond :
 	COND_BEGIN expr COND_END stmt

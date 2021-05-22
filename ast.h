@@ -8,7 +8,7 @@
 /***************************************************************************/
 /* Data structures for storing a programme.                                */
 
-enum STMT { S_COND, S_ASSIGN, S_PRINT, S_IF, S_DO, S_PROC_ENDED };
+enum STMT { S_SKIP, S_COND, S_ASSIGN, S_PRINT, S_IF, S_DO, S_PROC_ENDED };
 
 enum EXPR { E_OTHER, E_XOR, E_OR, E_EQUAL, E_ADD, E_AND, E_NOT, E_TRUE, E_FALSE };
 
