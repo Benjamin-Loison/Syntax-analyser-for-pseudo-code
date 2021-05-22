@@ -1,0 +1,7 @@
+// Algo lsdkfjlskdfj
+
+var a, b, c;
+
+IF
+:: a == 12 -> a := 12
+FI
