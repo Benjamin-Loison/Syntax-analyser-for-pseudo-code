@@ -1,2 +1,6 @@
-var a, b, c;
+var x;
+
+proc p
+    x := 1
+end
 

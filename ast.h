@@ -10,7 +10,7 @@
 
 enum STMT { S_SKIP, S_COND, S_ASSIGN, S_PRINT, S_IF, S_DO, S_PROC_ENDED };
 
-enum EXPR { E_OTHER, E_XOR, E_OR, E_EQUAL, E_ADD, E_AND, E_NOT, E_TRUE, E_FALSE };
+enum EXPR { E_CST, E_OTHER, E_XOR, E_OR, E_EQUAL, E_ADD, E_AND, E_NOT, E_TRUE, E_FALSE };
 
 typedef struct var	// a variable
 {
@@ -72,7 +72,7 @@ void print_variables (var_t *v);
 void print_local_variables (proc_t *program_procs);
 void print_global_variables (var_t* program_vars);
 varlist_t* make_varlist (char *, proc_t*, var_t*);
-void add_program_vars (var_t *v, var_t* program_vars);
+var_t* add_program_vars (var_t *v, var_t* program_vars);
 
 // Expression related function(~~s~~)
 expr_t* make_expr (int type, var_t *var, expr_t *left, expr_t *right);

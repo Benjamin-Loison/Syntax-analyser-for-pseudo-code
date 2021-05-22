@@ -8,12 +8,12 @@ void yyerror(const char *s)
 
 void debug(const char* loc, const char* msg, const char *precision)
 {
-	printf("[%15s]: %s (%s)", loc, msg, precision);
+	printf("[%20s]: %s (%s)\n", loc, msg, precision);
 }
 
 var_t* make_ident (char *s)
 {
-	debug("make_ident", "...", "");
+	debug("make_ident", s, "");
 	var_t *v = malloc(sizeof(var_t));
 	v->name = s;
 	v->value = 0;	// make variable null initially
@@ -89,6 +89,7 @@ varlist_t* make_varlist (char *s, proc_t* program_procs, var_t* program_vars)
 
 expr_t* make_expr (int type, var_t *var, expr_t *left, expr_t *right)
 {
+	if(type == E_CST) printf("\nCST !!!!!!%d\n\n", (int)(long)var);
 	expr_t *e = malloc(sizeof(expr_t));
 	e->type = type;
 	e->var = var;
@@ -123,14 +124,14 @@ proc_t* make_proc () /// TODO: initialize with the argument
 	return p;
 }
 
-void add_program_vars (var_t *v, var_t* program_vars)
+var_t* add_program_vars (var_t *v, var_t* program_vars)
 {
-	if(program_vars == NULL)
+	if(program_vars == NULL) {
 		program_vars = v;
-	else
-	{
+	} else {
 		var_t *program_vars_tmp = program_vars;
 		while(program_vars_tmp->next != NULL) program_vars_tmp = program_vars_tmp->next;
 		program_vars_tmp->next = v;
 	}
+	return program_vars;
 }

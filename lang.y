@@ -59,7 +59,7 @@ prog :
 
 prog_vars :
 	VAR declist ';'
-		{ add_program_vars($2, program_vars); }
+		{ program_vars = add_program_vars($2, program_vars); }
 	| prog_vars prog_vars {}
 
 //proc    : PROC_BEGIN stmt PROC_END { proc* tmp = program_procs; program_procs = make_proc($2); program_procs->next = tmp; }
@@ -149,7 +149,7 @@ varlist :
 
 expr :
 	CST
-		{ $$ = make_expr($1,NULL,NULL,NULL); }
+		{ $$ = make_expr(E_CST,(void*)(long)$1,NULL,NULL); }
 	| IDENT
 		{ $$ = make_expr(E_OTHER,find_ident($1, program_procs, program_vars),NULL,NULL); }
 	| expr XOR expr
