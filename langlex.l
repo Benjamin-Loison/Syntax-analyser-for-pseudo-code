@@ -5,24 +5,23 @@ DIG	[0-9]
 %%
 
 "var"	{ return VAR; }
-"while"	{ return WHILE; }
 "do"	{ return DO; }
 "od"	{ return OD; }
 "print"	{ return PRINT; }
 "true"	{ return TRUE; }
 "false"	{ return FALSE; }
 "if"	{ return IF; }
-"then"	{ return THEN; }
-"else"	{ return ELSE; }
 "fi"	{ return FI; }
+"::"	{ return COND_BEGIN; }
+"->"	{ return COND_END; }
 
 ":="	{ return ASSIGN; }
-"^"	{ return XOR; }
+"^"		{ return XOR; }
 "||"	{ return OR; }
 "=="	{ return EQUAL; }
-"+"   { return ADD; }
+"+"		{ return ADD; }
 "&&"	{ return AND; }
-"!"	{ return NOT; }
+"!"		{ return NOT; }
 
 "proc "[a-z][a-z0-9]* { return PROC_BEGIN; }
 "end" { return PROC_END; }

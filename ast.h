@@ -35,6 +35,7 @@ typedef struct stmt	// command
 	expr_t *expr;
 	struct stmt *left, *right;
 	varlist_t *list;
+	cond_t *cond;
 } stmt_t;
 
 typedef struct proc
@@ -44,6 +45,14 @@ typedef struct proc
 	var_t* var;
 	struct proc *next;
 } proc_t;
+
+
+typedef struct cond
+{
+	expr_t *expr;
+	stmt_t *stmt;
+	struct cond *next;
+} cond_t;
 
 
 

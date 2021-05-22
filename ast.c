@@ -44,7 +44,8 @@ expr_t* make_expr (int type, var_t *var, expr_t *left, expr_t *right)
 }
 
 stmt_t* make_stmt (int type, var_t *var, expr_t *expr,
-			stmt_t *left, stmt_t *right, varlist_t *list)
+			stmt_t *left, stmt_t *right, varlist_t *list,
+			cond_t *cond)
 {
 	stmt_t *s = malloc(sizeof(stmt_t));
 	s->type = type;
@@ -53,6 +54,7 @@ stmt_t* make_stmt (int type, var_t *var, expr_t *expr,
 	s->left = left;
 	s->right = right;
 	s->list = list;
+	s->cond = cond;
 	return s;
 }
 

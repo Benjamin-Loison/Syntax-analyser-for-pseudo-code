@@ -38,9 +38,9 @@ proc_t *program_procs;
 %type <v> declist
 %type <l> varlist
 %type <e> expr
-%type <s> stmt assign
+%type <s> stmt assign cond
 
-%token VAR WHILE DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI ELSE THEN PROC_BEGIN PROC_END PROC_ENDED
+%token VAR DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI PROC_BEGIN PROC_END PROC_ENDED COND_BEGIN COND_END
 %token <i> IDENT
 %token <n> CST
 
@@ -81,13 +81,24 @@ declist :
 stmt :
 	assign
 	| stmt ';' stmt	
-		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
+		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL, NULL); }
 	| PRINT varlist
-		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2); }
+		{ $$ = make_stmt(PRINT,NULL,NULL,NULL,NULL,$2, NULL); }
+	| IF cond FI
+		{ $$ = $2; }
+	| DO cond OD
+		{ $$ = make_stmt(DO, NULL, NULL, NULL, NULL, NULL, make_cond($2)) }
+
+cond :
+	COND_BEGIN expr COND_END stmt
+		{ $$ = make_stmt(COND, NULL, $2, $4, NULL, NULL, NULL); }
+	cond cond
+		{ $$ = make_stmt(COND, NULL, NULL, $1, $2, NULL, NULL); }
 
 assign :
 	IDENT ASSIGN expr
-		{ $$ = make_stmt(ASSIGN,find_ident($1, program_vars, program_procs),$3,NULL,NULL,NULL); }
+		{ $$ = make_stmt(ASSIGN,find_ident($1, program_vars,
+ program_procs),$3,NULL,NULL,NULL, NULL); }
 
 varlist :
 	IDENT
@@ -177,19 +188,6 @@ void execute_step(stmt_t *s)
             /*s->left = s->right;
 			s->right = NULL;*/
             break;
-        case WHILE:
-			debug("WHILE\n");
-            //if (eval(s->expr)) execute_step(s->left);
-			while (eval(s->expr)) execute_step(s->left);
-			//debug("yeah\n");
-			//return; // this is so violent
-			s->type = PROC_ENDED;
-            break;
-        case IF:
-			debug("IF\n");
-            if(eval(s->expr)) execute_step (s->left);
-            else if (s->right != NULL) execute_step(s->right);
-            break;
         case PRINT:
 			debug("PRINT\n");
             print_vars(s->list);
@@ -208,13 +206,6 @@ void execute (stmt_t *s)
 		case ';':
 			execute(s->left);
 			execute(s->right);
-			break;
-		case WHILE:
-			while (eval(s->expr)) execute(s->left);
-			break;
-		case IF:
-			if(eval(s->expr)) execute (s->left);
-			else if (s->right != NULL) execute(s->right);
 			break;
 		case PRINT: 
 			print_vars(s->list);
