@@ -24,10 +24,10 @@ DIG	[0-9]
 "&&"	{ return AND; }
 "!"		{ return NOT; }
 
-"proc "[a-z][a-z0-9]* { yylval.s = yytext; return PROC_BEGIN; }
+"proc "[a-z][a-z0-9]* { yylval.i = yytext; return PROC_BEGIN; }
 "end" { return PROC_END; }
 [a-z_][a-z0-9_]* { yylval.i = strdup(yytext); return IDENT; }
-[0-9]* { yylval.i = atoi(yytext); return CST; }
+[0-9]* { yylval.n = atoi(yytext); return CST; }
 
 
 [	 \n]   { /* ignore */ }

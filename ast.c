@@ -8,6 +8,7 @@ void yyerror(const char *s)
 
 void debug(const char* loc, const char* msg, const char *precision)
 {
+	if(!ast_debug) return;
 	char long_dots[100];
 	sprintf(long_dots, "%s ............................................................", msg);
 	printf("[%20s]: %.41s (%s)\n", loc, long_dots, precision);
@@ -15,9 +16,10 @@ void debug(const char* loc, const char* msg, const char *precision)
 
 void clean_debug(const char* msg, const char *precision)
 {
+	/*if(!ast_debug) return;
 	char long_dots[100];
 	sprintf(long_dots, "%s ............................................................", msg);
-	printf("%24s| %.39s (%s)\n", "", long_dots, precision);
+	printf("%24s| %.39s (%s)\n", "", long_dots, precision);*/ return;
 }
 
 var_t* make_ident (char *s)
@@ -34,7 +36,7 @@ var_t* find_ident_from_var (char *s, var_t* vTmp, int violent)
 {
 	//if(vTmp == NULL) { yyerror("vTmp NULL"); exit(1); }
 	if(!vTmp) return NULL;
-	clean_debug("variable_name", vTmp->name);
+	//clean_debug("variable_name", vTmp->name);
 	var_t* v = vTmp; // otherwise might change original one
 	while (v && strcmp(v->name, s)/* && printf("v (%s)", v->name)*/) v = v->next;
 	if (!v) { if(violent) { yyerror("undeclared variable"); exit(1); } else return NULL; }
@@ -61,7 +63,7 @@ var_t* find_ident (char *s, proc_t* program_procs, var_t* program_vars)
 	debug("find_ident", "looking", s); // si pas de "\n" ça n'affiche pas forcément u_u
 	var_t* v = find_local_ident (s, program_procs);
 	if(!v) {
-		debug("find_ident", "unfound locally, looking globally", s);
+		clean_debug("unfound locally, looking globally", s);
 		v = find_global_ident (s, program_vars);
 	}
 	if(!v) { yyerror("undeclared variable"); exit(1); }

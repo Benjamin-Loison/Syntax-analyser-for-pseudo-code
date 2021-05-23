@@ -3,7 +3,7 @@
 
 #include "ast.h"
 
-void execute_ast(stmt*);
+void execute_ast(var_t*, proc_t*);
 
 #endif// __EXECUTER_H_
 

@@ -3,7 +3,7 @@
 
 #include "ast.h"
 
-void print_ast(proc_t*);
+void print_ast(var_t*, proc_t*);
 
 #endif// __PRINTER_H_
 

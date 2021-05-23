@@ -157,6 +157,14 @@ void printer_statement(stmt_t *stmt)
 		case S_PROC_ENDED:
 			pprint("Proc", "End of the proc.");
 			break;
+		case S_JUXT:
+			pprint("stmts", "Juxtaposition of statements");
+			printer_statement(stmt->left);
+			printer_statement(stmt->right);
+			break;
+		default:
+			pprint("ERROR", "*********************************");
+			break;
 	}
 }
 
@@ -176,16 +184,20 @@ void printer_proc(proc_t *proc)
 	printer_proc(proc->next);
 }
 
-void print_ast(proc_t *ast)
+void print_ast(var_t* vars, proc_t *ast)
 {
 	if(!ast) {
 		debug("printer_ast", "the AST is empty", "");
 		return;
 	}
 
-	printf("Printing the AST:\n");
+	printf("Printing the AST:\n\nGlobal variables (shared among procs)\n\n");
 	// Global variables:
-	// TODO!
+	while(vars) {
+		if(vars->next) printf("'%s' ;", vars->name);
+		else printf("'%s'.\n\n\nAST:\n\n", vars->name);
+		vars = vars->next;
+	}
 
 	// Proint the first proc (the function will take care of the next procs as
 	// well):

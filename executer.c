@@ -1,3 +1,3 @@
 #include "executer.h"
 
-void execute_ast(stmt*) {}
+void execute_ast(var_t* vars, proc_t* proc) {}

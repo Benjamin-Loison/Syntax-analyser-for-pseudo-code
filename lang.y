@@ -6,6 +6,7 @@
 #include <time.h>
 #include "ast.h"
 #include "printer.h"
+#include "executer.h"
 
 int yylex();
 
@@ -71,7 +72,8 @@ proc_whole :
 proc_begin :
 	PROC_BEGIN
 		{
-			char *proc_name = (char*)((long)($1) + 5);
+			char *proc_name = malloc(sizeof(char) * (strlen($1) - 4));
+			strcpy(proc_name, (char*)((long)($1) + 5));
 			debug("proc", "begin", proc_name);
 			if(is_in_a_proc) {
 				yyerror("already in a process !\n");
@@ -122,7 +124,7 @@ declist :
 stmt :
 	assign
 	| stmt ';' stmt	
-		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
+		{ $$ = make_stmt(S_JUXT,NULL,NULL,$1,$3,NULL); }
 	| PRINT varlist
 		{ $$ = make_stmt(S_PRINT,NULL,NULL,NULL,NULL,$2); }
 	| IF cond FI
@@ -314,25 +316,9 @@ int main (int argc, char **argv)
 		else printf("\t%15s: \033[33mdisabled\033[0m\n", "ast execution");
 
 	if (!yyparse()) {// The parsing was successfull
-		if (print_ast_flag) print_ast(program_procs);
+		if (print_ast_flag) print_ast(program_vars, program_procs);
 		// execution enabled ?
-		if(execute_flag) {
-			//if (!l) return;
-			srand(time(NULL));
-			printf("counting...\n");
-			unsigned int proc_size = get_proc_size(program_procs);
-			printf("proc_size: %i\n", proc_size);
-			while(is_a_proc_needing_execute(program_procs))
-			{
-				printf("executing stuff...\n");
-				int r = rand() % proc_size;
-				printf("executing proc %i\n", r);
-				proc_t* p = get_proc(program_procs, r);
-				printf("I got the proc I need to see me through\n");
-				execute_step(p->statement);
-			}
-			//execute(program_stmts);
-		}
+		if(execute_flag) execute_ast(program_vars, program_procs);
 	} else
 		yyerror("The parser failed.\n\n");
 
