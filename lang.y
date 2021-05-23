@@ -41,7 +41,7 @@ int is_in_a_proc = 0;
 %type <e> expr
 %type <s> stmt assign cond
 
-%token SKIP VAR DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI PROC_END PROC_ENDED COND_BEGIN COND_END
+%token SKIP VAR DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI PROC_END PROC_ENDED COND_BEGIN COND_END GNEQ
 %token <i> IDENT PROC_BEGIN
 %token <n> CST
 
@@ -165,6 +165,8 @@ expr :
 		{ $$ = make_expr(E_ADD,NULL,$1,$3); }
 	| expr AND expr
 		{ $$ = make_expr(E_AND,NULL,$1,$3); }
+	| expr GNEQ expr
+		{ $$ = make_expr(E_GNEQ,NULL,$1,$3); }
 	| NOT expr
 		{ $$ = make_expr(E_NOT,NULL,$2,NULL); }
 	| TRUE
@@ -191,6 +193,7 @@ int eval (expr_t *e)
 		case E_OR:    debug("eval", "OR", ""); return eval(e->left) || eval(e->right);
 		case E_EQUAL: debug("eval", "EQUAL", ""); return eval(e->left) == eval(e->right);
 		case E_ADD:   debug("eval", "ADD", ""); return eval(e->left) + eval(e->right);
+		case E_GNEQ:  debug("eval", "GNEQ", ""); return eval(e->left) > eval(e->right);
 		case E_AND:   debug("eval", "AND", ""); return eval(e->left) && eval(e->right);
 		case E_NOT:   debug("eval", "NOT", ""); return !eval(e->left);
 		case E_OTHER: debug("eval", "ZERO", ""); if(e->var == NULL) debug("evel", "other", "e->var is NULL"); return e->var->value;
