@@ -1,5 +1,10 @@
 #include "executer.h"
 
+/*et_t* ast_to_et(proc_t* ast)
+{
+	return NULL;
+}*/
+
 void execute_ast(var_t* vars, proc_t* proc)
 {
 	// First of all, convert the AST tree into a forest:

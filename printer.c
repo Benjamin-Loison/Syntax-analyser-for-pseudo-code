@@ -91,9 +91,11 @@ void printer_expression (expr_t *expr)
 			pprint("FALSE", "This is a hell of an expression");
 			break;
 		case E_CST:
-			char buffer[1024];
-			sprintf(buffer, "value: %d", (int)(long)expr->var);
-			pprint("CST", buffer);
+			{
+				char buffer[1024];
+				sprintf(buffer, "value: %d", (int)(long)expr->var);
+				pprint("CST", buffer);
+			}
 			break;
 		default:
 			pprint("_", "This is not a correct expression.");
@@ -135,11 +137,13 @@ void printer_statement(stmt_t *stmt)
 			indentation --;
 			break;
 		case S_PRINT:
-			// Print varlist
-			varlist_t *l = stmt->list;
-			while(l) {
-				printer_vars (l->var);
-				l = l->next;
+			{
+				// Print varlist
+				varlist_t *l = stmt->list;
+				while(l) {
+					printer_vars (l->var);
+					l = l->next;
+				}
 			}
 			break;
 		case S_IF:
