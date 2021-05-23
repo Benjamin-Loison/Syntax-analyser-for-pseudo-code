@@ -22,9 +22,8 @@ clean:
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 $(EXEC): $(OBJ)
-	yacc  lang.y
-	mv -f y.tab.c lang.c
-	cc $(OBJ) -o lang
+	$(CC) $(OBJ) -o lang
+	rm lang{,lex}.c
 
 mrproper: clean
 	rm lang
