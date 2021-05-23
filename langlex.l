@@ -22,6 +22,7 @@ DIG	[0-9]
 "=="	{ return EQUAL; }
 "+"		{ return ADD; }
 "&&"	{ return AND; }
+">"		{ return GNEQ; }
 "!"		{ return NOT; }
 
 "proc "[a-z][a-z0-9]* { yylval.i = yytext; return PROC_BEGIN; }
@@ -32,6 +33,7 @@ DIG	[0-9]
 
 [	 \n]   { /* ignore */ }
 "//"[^\n]*$ ; // https://stackoverflow.com/a/23235232
+"reach"[^\n]*$ ;
 
 .	{ return *yytext; }
 
