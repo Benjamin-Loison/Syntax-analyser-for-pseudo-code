@@ -3,17 +3,17 @@
 /*****************************************************************************/
 /* Auxiliary functions                                                       */
 
-void push(stmt_stack_t*,stmt_t*)
+void push(stmt_stack_t* stmtStack, stmt_t* stmt)
 {
 	return;
 }
 
-stmt_t* pop_stmt(stmt_stack_t*)// Does not update the stack!
+stmt_t* pop_stmt(stmt_stack_t* stmtStack)// Does not update the stack!
 {
 	return NULL;
 }
 
-int isEmpty(stmt_stack_t* s)
+int isEmpty(stmt_stack_t* stmtStack)
 {
 	return 1;
 }
