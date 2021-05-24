@@ -6,6 +6,7 @@
 #include <time.h>
 #include "ast.h"
 #include "printer.h"
+#include "executer.h"
 
 int yylex();
 
@@ -178,109 +179,6 @@ expr :
 %%
 
 #include "langlex.c"
-
-/****************************************************************************/
-/* programme interpreter      :                                             */
-
-int eval (expr_t *e)
-{
-	switch (e->type)
-	{
-		case E_TRUE:  debug("eval", "TRUE", ""); return 1;
-		case E_FALSE: debug("eval", "FALSE", ""); return 0;
-		case E_XOR:   debug("eval", "XOR", ""); return eval(e->left) ^ eval(e->right);
-		case E_OR:    debug("eval", "OR", ""); return eval(e->left) || eval(e->right);
-		case E_EQUAL: debug("eval", "EQUAL", ""); return eval(e->left) == eval(e->right);
-		case E_ADD:   debug("eval", "ADD", ""); return eval(e->left) + eval(e->right);
-		case E_GNEQ:  debug("eval", "GNEQ", ""); return eval(e->left) > eval(e->right);
-		case E_AND:   debug("eval", "AND", ""); return eval(e->left) && eval(e->right);
-		case E_NOT:   debug("eval", "NOT", ""); return !eval(e->left);
-		case E_OTHER: debug("eval", "ZERO", ""); if(e->var == NULL) debug("evel", "other", "e->var is NULL"); return e->var->value;
-	}
-}
-
-void print_vars (varlist_t *l)
-{
-	if (!l) return;
-	print_vars(l->next);
-	printf("%s = %i  ", l->var->name, l->var->value);
-}
-
-/*void execute_proc (proc *proc)
-{
-	if (!proc) return;
-	print
-}*/
-
-// il faut pas éxécuter processus 1 puis 2 car sinon ça risque de s'interbloquer donc faut faire un peu de 1 puis un peu de 2 et ainsi de suite
-void execute_step(stmt_t *s)
-{
-	switch(s->type)
-    {
-        case S_ASSIGN:
-			debug("execute_step", "start", "ASSIGN");
-            s->var->value = eval(s->expr);
-            break;
-        case ';':
-			debug("execute_step", "start", ";");
-            execute_step(s->left);
-			execute_step(s->right);
-            /*s->left = s->right;
-			s->right = NULL;*/
-            break;
-        case S_PRINT:
-			debug("execute_step", "start", "PRINT");
-            print_vars(s->list);
-            break;
-    }
-}
-
-void execute (stmt_t *s)
-{
-	switch(s->type)
-	{
-		case S_ASSIGN:
-			s->var->value = eval(s->expr);
-			break;
-		case ';':
-			execute(s->left);
-			execute(s->right);
-			break;
-		case S_PRINT: 
-			print_vars(s->list);
-			break;
-		case S_PROC_ENDED:
-			break;
-	}
-}
-
-int is_a_proc_needing_execute(proc_t *p)
-{
-	printf("is_a_proc_needing_execute a\n");
-	if (!p) return 0;
-	printf("is_a_proc_needing_execute b\n");
-	//stmt *s = p->statement;
-	//printf("is_a_proc_needing_execute c\n");
-	if(p->statement == NULL) debug("is proc needing", "p->statement", "NULL");
-	if(p->statement != NULL && p->statement->type == PROC_ENDED) debug("is proc needing", "p->statement->type", "PROC_ENDED");
-	return (p->statement != NULL && p->statement->type != PROC_ENDED) || is_a_proc_needing_execute(p->next);
-}
-
-unsigned int proc_size_aux(proc_t *p, unsigned int acc)
-{
-	if (!p) return acc;
-	return proc_size_aux(p->next, acc + 1);
-}
-
-unsigned int get_proc_size(proc_t *p)
-{
-	return proc_size_aux(p, 0);
-}
-
-proc_t* get_proc(proc_t *p, unsigned int proc_id)
-{
-	return proc_id == 0 ? p : get_proc(p->next, proc_id--);
-}
 
 /****************************************************************************/
 
