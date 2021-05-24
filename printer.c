@@ -78,13 +78,6 @@ void printer_expression (expr_t *expr)
 		case E_GNEQ:
 			printer_dual_op(expr, "GNEQ (>) operator");
 			break;
-		case E_SUB:
-			pprint("SUB (-) operator", "(2 expressions below)");
-			indentation ++;
-			printer_expression(expr->left);
-			printer_expression(expr->right);
-			indentation --;
-			break;
 		case E_AND:
 			printer_dual_op(expr, "AND (&&) operator");
 			break;

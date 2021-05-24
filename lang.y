@@ -21,7 +21,9 @@ int is_in_a_proc = 0;
 %}
 
 // %error-verbose is deprecated
+%locations
 %define parse.error verbose
+%define parse.trace
 
 /****************************************************************************/
 

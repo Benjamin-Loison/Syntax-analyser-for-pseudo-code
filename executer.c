@@ -103,17 +103,3 @@ void execute_ast(var_t* vars, proc_t* proc)
 	printf("End of the execution.\n\n");
 }
 
-void push(stack_t* stack, stmt_t* stmt)
-{
-	
-}
-
-stmt_t* pop_stmt(stack_t* stack)
-{
-	
-}
-
-int isEmpty(stack_t* stack)
-{
-	
-}
