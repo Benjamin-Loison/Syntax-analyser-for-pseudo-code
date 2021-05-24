@@ -133,7 +133,7 @@ declist :
 stmt :
 	assign
 	| stmt ';' stmt	
-		{ $$ = make_stmt(';',NULL,NULL,$1,$3,NULL); }
+		{ $$ = make_stmt(S_JUXT,NULL,NULL,$1,$3,NULL); }
 	| PRINT varlist
 		{ $$ = make_stmt(S_PRINT,NULL,NULL,NULL,NULL,$2); }
 	| IF cond FI
