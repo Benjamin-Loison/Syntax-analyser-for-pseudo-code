@@ -318,11 +318,9 @@ int main (int argc, char **argv)
 		else printf("\t%15s: \033[33mdisabled\033[0m\n", "ast execution");
 
 	if (!yyparse()) {// The parsing was successfull
-		if (print_ast_flag) print_ast(program_procs);
+		if (print_ast_flag) print_ast(program_vars, program_procs);
 		// execution enabled ?
-		if(execute_flag) {
-struct
-		}
+		if(execute_flag) execute_ast(program_vars, program_procs);
 	} else
 		yyerror("The parser failed.\n\n");
 

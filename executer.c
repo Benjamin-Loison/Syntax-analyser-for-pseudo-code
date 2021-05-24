@@ -36,7 +36,7 @@ void execute_step(var_t* vars, stmt_t* stmt, stack_t** stack)
 			execute_step(vars, stmt->left, stack);
 			break;
 		default:
-			pprint("ERROR", "*********************************");
+			printf("\n\n!!!ERROR: *********************************");
 			break;
 	}
 }
@@ -44,26 +44,26 @@ void execute_step(var_t* vars, stmt_t* stmt, stack_t** stack)
 void execute_proc (var_t* program_vars, proc_t* proc)
 {
 	stmt_t *stmt;
-	stack_t stack = malloc(sizeof(stack_t));
+	stack_t *stack = malloc(sizeof(stack_t));
 	push(stack, proc->statement);
 	while(!isEmpty(stack)) {
 		// Pop an element from the stack and update the stack.
 		stmt = pop_stmt(stack);
-		stack = stack->next.
+		stack = stack->next;
 
 		// The execution might add elements to the stack, hence the &stack.
-		execute_step(program_vars, statement, &stack);
+		execute_step(program_vars, stmt, &stack);
 	}
 }
 
 void execute_ast(var_t* vars, proc_t* proc)
 {
-	proc _t* current_proc = proc;
+	proc_t* current_proc = proc;
 	int nb_procs = 0;
 	// First of all, one must split the AST to get every procs on line.
 	while(current_proc) {
 		nb_procs ++;
-		current_proc = current_proc->next:
+		current_proc = current_proc->next;
 	}
 
 	pid_t* pids = malloc (nb_procs * sizeof(pid_t));
@@ -72,7 +72,7 @@ void execute_ast(var_t* vars, proc_t* proc)
 	while(current_proc) {
 		i ++;
 		if((pids[i] = fork())) {
-			execute_proc(current_proc);
+			execute_proc(vars, current_proc);
 		}
 		current_proc = current_proc->next;
 	}
