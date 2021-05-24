@@ -93,6 +93,9 @@ void printer_expression (expr_t *expr)
 		case E_FALSE:
 			pprint("FALSE", "This is a hell of an expression");
 			break;
+		case E_ELSE:
+			pprint("ELSE", "True if no other statement is");
+			break;
 		case E_CST:
 			{
 				char buffer[1024];
@@ -169,8 +172,12 @@ void printer_statement(stmt_t *stmt)
 			printer_statement(stmt->left);
 			printer_statement(stmt->right);
 			break;
+		case S_BREAK:
+			pprint("break", "Break the current loop");
+			break;
 		default:
 			pprint("ERROR", "*********************************");
+
 			break;
 	}
 }
