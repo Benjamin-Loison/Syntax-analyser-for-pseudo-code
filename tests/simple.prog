@@ -1,6 +1,8 @@
 var x;
 
 proc p
-	x := x
+	do
+		:: 1 -> x := x + 1
+	od
 end
 
