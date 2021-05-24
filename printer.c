@@ -71,6 +71,13 @@ void printer_expression (expr_t *expr)
 			printer_expression(expr->right);
 			indentation --;
 			break;
+		case E_SUB:
+			pprint("SUB (-) operator", "(2 expressions below)");
+			indentation ++;
+			printer_expression(expr->left);
+			printer_expression(expr->right);
+			indentation --;
+			break;
 		case E_AND:
 			pprint("AND (&&) operator", "(2 expressions below)");
 			indentation ++;

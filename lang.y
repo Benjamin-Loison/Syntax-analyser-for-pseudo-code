@@ -41,7 +41,7 @@ int is_in_a_proc = 0;
 %type <e> expr
 %type <s> stmt assign cond
 
-%token SKIP VAR DO OD ASSIGN PRINT OR EQUAL ADD AND XOR NOT TRUE FALSE IF FI PROC_END PROC_ENDED COND_BEGIN COND_END GNEQ
+%token SKIP BREAK VAR DO OD ASSIGN PRINT OR EQUAL ADD SUB AND XOR NOT TRUE FALSE ELSE IF FI PROC_END PROC_ENDED COND_BEGIN COND_END GNEQ
 %token <i> IDENT PROC_BEGIN
 %token <n> CST
 
@@ -68,6 +68,7 @@ prog_vars :
 
 proc_whole :
 	proc_begin proc proc_end {}
+	| proc_whole proc_whole {}
 
 proc_begin :
 	PROC_BEGIN
@@ -133,6 +134,8 @@ stmt :
 		{ $$ = make_stmt(S_DO, NULL, NULL, $2, NULL, NULL); }
 	| SKIP
 		{ $$ = make_stmt(S_SKIP, NULL, NULL, NULL, NULL, NULL); }
+	| BREAK
+		{ $$ = make_stmt(S_BREAK, NULL, NULL, NULL, NULL, NULL); }
 
 cond :
 	COND_BEGIN expr COND_END stmt
@@ -163,6 +166,8 @@ expr :
 		{ $$ = make_expr(E_EQUAL,NULL,$1,$3); }
 	| expr ADD expr
 		{ $$ = make_expr(E_ADD,NULL,$1,$3); }
+	| expr SUB expr
+		{ $$ = make_expr(E_SUB,NULL,$1,$3); }
 	| expr AND expr
 		{ $$ = make_expr(E_AND,NULL,$1,$3); }
 	| expr GNEQ expr
@@ -173,6 +178,8 @@ expr :
 		{ $$ = make_expr(E_TRUE,NULL,NULL,NULL); }
 	| FALSE
 		{ $$ = make_expr(E_FALSE,NULL,NULL,NULL); }
+	| ELSE
+		{ $$ = make_expr(E_ELSE,NULL,NULL,NULL); }
 	| '(' expr ')'
 		{ $$ = $2; }
 

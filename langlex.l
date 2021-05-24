@@ -10,17 +10,20 @@ DIG	[0-9]
 "print"	{ return PRINT; }
 "true"	{ return TRUE; }
 "false"	{ return FALSE; }
+"else"	{ return ELSE; }
 "if"	{ return IF; }
 "fi"	{ return FI; }
 "::"	{ return COND_BEGIN; }
 "->"	{ return COND_END; }
 "skip"	{ return SKIP; }
+"break"	{ return BREAK; }
 
 ":="	{ return ASSIGN; }
 "^"		{ return XOR; }
 "||"	{ return OR; }
 "=="	{ return EQUAL; }
 "+"		{ return ADD; }
+"-"		{ return SUB; }
 "&&"	{ return AND; }
 ">"		{ return GNEQ; }
 "!"		{ return NOT; }
