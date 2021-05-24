@@ -49,15 +49,17 @@ int is_in_a_proc = 0;
 
 %left ';'
 
+%left GNEQ PRINT
 %left EQUAL
 %left OR XOR
 %left AND
-%left ADD
-%left SUB
-%left MUL
-%left DIV
+%left ADD SUB
+%left MUL DIV
 %left MOD
 %right NOT
+
+%left VAR
+
 
 %%
 prog :

@@ -18,8 +18,20 @@ int isEmpty(stmt_stack_t* s)
 	return 1;
 }
 
-int evalExpr(var_t* var, expr_t* expr)
+int evalExpr(var_t* var, expr_t* e)
 {
+	switch (e->type)
+	{
+		case E_TRUE:  return 1;
+		case E_FALSE: return 0;
+		case E_XOR:   return evalExpr(var, e->left) ^ evalExpr(var, e->right);
+		case E_OR:    return evalExpr(var, e->left) || evalExpr(var, e->right);
+		case E_EQUAL: return evalExpr(var, e->left) == evalExpr(var, e->right);
+		case E_ADD:   return evalExpr(var, e->left) + evalExpr(var, e->right);
+		case E_AND:   return evalExpr(var, e->left) && evalExpr(var, e->right);
+		case E_NOT:   return !evalExpr(var, e->left);
+		case E_OTHER: if(e->var == NULL) debug("evel", "other", "e->var is NULL"); return e->var->value;
+	}
 	// TODO!
 	return 0;
 }
