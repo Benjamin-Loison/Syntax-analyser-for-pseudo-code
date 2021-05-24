@@ -41,7 +41,7 @@ int is_in_a_proc = 0;
 %type <e> expr
 %type <s> stmt assign cond
 
-%token SKIP BREAK VAR DO OD ASSIGN PRINT OR EQUAL ADD SUB AND XOR NOT TRUE FALSE ELSE IF FI PROC_END PROC_ENDED COND_BEGIN COND_END GNEQ
+%token SKIP BREAK ELSE VAR DO OD ASSIGN PRINT OR EQUAL ADD AND SUB MUL DIV MOD XOR NOT TRUE FALSE IF FI PROC_END PROC_ENDED COND_BEGIN COND_END GNEQ
 %token <i> IDENT PROC_BEGIN
 %token <n> CST
 
@@ -51,6 +51,10 @@ int is_in_a_proc = 0;
 %left OR XOR
 %left AND
 %left ADD
+%left SUB
+%left MUL
+%left DIV
+%left MOD
 %right NOT
 
 %%
@@ -168,6 +172,12 @@ expr :
 		{ $$ = make_expr(E_ADD,NULL,$1,$3); }
 	| expr SUB expr
 		{ $$ = make_expr(E_SUB,NULL,$1,$3); }
+	| expr MUL expr
+		{ $$ = make_expr(E_MUL,NULL,$1,$3); }
+	| expr DIV expr
+		{ $$ = make_expr(E_DIV,NULL,$1,$3); }
+	| expr MOD expr
+		{ $$ = make_expr(E_MOD,NULL,$1,$3); }
 	| expr AND expr
 		{ $$ = make_expr(E_AND,NULL,$1,$3); }
 	| expr GNEQ expr

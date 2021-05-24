@@ -29,6 +29,14 @@ void printer_vars(var_t *variable)
 	printer_vars(variable->next);
 }
 
+void printer_dual_op(expr_t* expr, char *opname)
+{
+	pprint(opname, "(2 expressions below)");
+	indentation ++;
+	printer_expression(expr->left);
+	printer_expression(expr->right);
+	indentation --;
+}
 
 void printer_expression (expr_t *expr)
 {
@@ -44,32 +52,31 @@ void printer_expression (expr_t *expr)
 			indentation --;
 			break;
 		case E_XOR:
-			pprint("XOR operator", "(2 expressions below)");
-			indentation ++;
-			printer_expression(expr->left);
-			printer_expression(expr->right);
-			indentation --;
+			printer_dual_op(expr, "XOR (^) operator");
 			break;
 		case E_OR:
-			pprint("OR (||) operator", "(2 expressions below)");
-			indentation ++;
-			printer_expression(expr->left);
-			printer_expression(expr->right);
-			indentation --;
+			printer_dual_op(expr, "OR (||) operator");
 			break;
 		case E_EQUAL:
-			pprint("EQUAL (==) operator", "(2 expressions below)");
-			indentation ++;
-			printer_expression(expr->left);
-			printer_expression(expr->right);
-			indentation --;
+			printer_dual_op(expr, "EQUAL (==) operator");
 			break;
 		case E_ADD:
-			pprint("ADD (+) operator", "(2 expressions below)");
-			indentation ++;
-			printer_expression(expr->left);
-			printer_expression(expr->right);
-			indentation --;
+			printer_dual_op(expr, "ADD (+) operator");
+			break;
+		case E_SUB:
+			printer_dual_op(expr, "SUB (+) operator");
+			break;
+		case E_MUL:
+			printer_dual_op(expr, "MUL (+) operator");
+			break;
+		case E_DIV:
+			printer_dual_op(expr, "DIV (+) operator");
+			break;
+		case E_MOD:
+			printer_dual_op(expr, "MOD (+) operator");
+			break;
+		case E_GNEQ:
+			printer_dual_op(expr, "GNEQ (>) operator");
 			break;
 		case E_SUB:
 			pprint("SUB (-) operator", "(2 expressions below)");
@@ -79,11 +86,7 @@ void printer_expression (expr_t *expr)
 			indentation --;
 			break;
 		case E_AND:
-			pprint("AND (&&) operator", "(2 expressions below)");
-			indentation ++;
-			printer_expression(expr->left);
-			printer_expression(expr->right);
-			indentation --;
+			printer_dual_op(expr, "AND (&&) operator");
 			break;
 		case E_NOT:
 			pprint("NOT (!) operator", "(see expression below)");

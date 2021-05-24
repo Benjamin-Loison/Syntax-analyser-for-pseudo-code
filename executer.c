@@ -1,12 +1,30 @@
 #include "executer.h"
 
+/*****************************************************************************/
+/* Auxiliary functions                                                       */
+
+void push(stmt_stack_t*,stmt_t*)
+{
+	return;
+}
+
+stmt_t* pop_stmt(stmt_stack_t*)// Does not update the stack!
+{
+	return NULL;
+}
+
+int isEmpty(stmt_stack_t* s)
+{
+	return 1;
+}
+
 int evalExpr(var_t* var, expr_t* expr)
 {
 	// TODO!
 	return 0;
 }
 
-void execute_step(var_t* vars, stmt_t* stmt, stack_t** stack)
+void execute_step(var_t* vars, stmt_t* stmt, stmt_stack_t** stack)
 {
 	if (!stmt) return;
 	switch(stmt->type) {
@@ -44,7 +62,7 @@ void execute_step(var_t* vars, stmt_t* stmt, stack_t** stack)
 void execute_proc (var_t* program_vars, proc_t* proc)
 {
 	stmt_t *stmt;
-	stack_t *stack = malloc(sizeof(stack_t));
+	stmt_stack_t *stack = malloc(sizeof(stmt_stack_t));
 	push(stack, proc->statement);
 	while(!isEmpty(stack)) {
 		// Pop an element from the stack and update the stack.

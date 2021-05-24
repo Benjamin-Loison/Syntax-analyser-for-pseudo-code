@@ -24,6 +24,9 @@ DIG	[0-9]
 "=="	{ return EQUAL; }
 "+"		{ return ADD; }
 "-"		{ return SUB; }
+"*"		{ return MUL; }
+"/"		{ return DIV; }
+"%"		{ return MOD; }
 "&&"	{ return AND; }
 ">"		{ return GNEQ; }
 "!"		{ return NOT; }

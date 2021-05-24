@@ -23,7 +23,6 @@ clean:
 
 $(EXEC): $(OBJ)
 	$(CC) $(OBJ) -o lang
-	rm lang{,lex}.c
 
 mrproper: clean
 	rm lang

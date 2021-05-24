@@ -17,7 +17,7 @@ static int ast_debug = 0;
 
 enum STMT { S_JUXT, S_SKIP, S_BREAK, S_COND, S_ASSIGN, S_PRINT, S_IF, S_DO, S_PROC_ENDED };
 
-enum EXPR { E_CST, E_GNEQ, E_OTHER, E_XOR, E_OR, E_EQUAL, E_ADD, E_SUB, E_AND, E_NOT, E_TRUE, E_FALSE, E_ELSE };
+enum EXPR { E_CST, E_GNEQ, E_OTHER, E_XOR, E_OR, E_EQUAL, E_ADD, E_SUB, E_MUL, E_DIV, E_MOD, E_AND, E_NOT, E_TRUE, E_FALSE };
 
 typedef struct var	// a variable
 {
