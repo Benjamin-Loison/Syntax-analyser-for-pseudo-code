@@ -169,8 +169,10 @@ void printer_statement(stmt_t *stmt)
 			break;
 		case S_JUXT:
 			pprint("stmts", "Juxtaposition of statements");
+			indentation ++;
 			printer_statement(stmt->left);
 			printer_statement(stmt->right);
+			indentation --;
 			break;
 		case S_BREAK:
 			pprint("break", "Break the current loop");
