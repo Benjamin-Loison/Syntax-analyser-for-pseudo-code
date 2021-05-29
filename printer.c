@@ -64,16 +64,16 @@ void printer_expression (expr_t *expr)
 			printer_dual_op(expr, "ADD (+) operator");
 			break;
 		case E_SUB:
-			printer_dual_op(expr, "SUB (+) operator");
+			printer_dual_op(expr, "SUB (-) operator");
 			break;
 		case E_MUL:
-			printer_dual_op(expr, "MUL (+) operator");
+			printer_dual_op(expr, "MUL (*) operator");
 			break;
 		case E_DIV:
-			printer_dual_op(expr, "DIV (+) operator");
+			printer_dual_op(expr, "DIV (/) operator");
 			break;
 		case E_MOD:
-			printer_dual_op(expr, "MOD (+) operator");
+			printer_dual_op(expr, "MOD (%) operator");
 			break;
 		case E_GNEQ:
 			printer_dual_op(expr, "GNEQ (>) operator");
