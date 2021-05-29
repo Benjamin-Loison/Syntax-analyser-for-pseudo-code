@@ -1,4 +1,0 @@
-lang
-lang.c
-*.o
-langlex.c
