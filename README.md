@@ -13,9 +13,7 @@ Vous trouverez:
     | commande 
   - printer.{c,h}
     | les fichiers liés à l'impression de l'AST
-  - dans le dossier enonce
-    | les fichiers donnés initialement
-
+    
 La syntaxe de la commande lang générée est :
 	lang [-no-exec] [-f] file [-p]
 
